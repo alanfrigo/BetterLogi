@@ -796,12 +796,32 @@ impl Agent for MockAgent {
         None
     }
 
-    async fn observe_action_ring(self, _: Context, _since: Generation) -> RingObservation {
-        // The mock scripts no rings, so it only ever has "none" to report —
-        // held for the window so an overlay polling it doesn't spin.
+    async fn observe_action_ring(self, _: Context, since: Generation) -> RingObservation {
+        // A demo shows one ring at the overlay's first look, so the ring's
+        // surface can be checked without a ring button; otherwise the mock
+        // only reports "none", held so a polling overlay doesn't spin.
+        if since == 0 && self.state.lock().await.clock.is_demo() {
+            let slot = |label: &str| openlogi_ipc::ActionRingPresentation {
+                label: label.to_owned(),
+                literal: true,
+                icon: openlogi_core::binding::ActionRingIcon::Pointer,
+            };
+            return RingObservation {
+                generation: 1,
+                invocation: Some(ActionRingInvocation {
+                    session_id: 1,
+                    slots: [
+                        (ActionRingSlot::Top, slot("Demo")),
+                        (ActionRingSlot::Right, slot("Ring")),
+                    ]
+                    .into(),
+                    language: None,
+                }),
+            };
+        }
         tokio::time::sleep(OBSERVE_HOLD).await;
         RingObservation {
-            generation: 1,
+            generation: 2,
             invocation: None,
         }
     }

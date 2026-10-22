@@ -813,7 +813,7 @@ const fn is_retryable(error: &HostSwitchError) -> bool {
         error,
         HostSwitchError::HostSlotEmpty { .. } | HostSwitchError::UnsupportedKeyboard
     )
- }
+}
 
 /// Move `target` after the keyboard of `departure`. Returns the slot that it
 /// switched to, or `None` when it already used that slot.

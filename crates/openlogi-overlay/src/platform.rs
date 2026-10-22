@@ -59,6 +59,62 @@ fn open_first_with<W, H>(
     None
 }
 
+/// Open a small transient indicator (lock key, backlight) built from the
+/// plain-window `options`.
+///
+/// On Wayland a plain window is a toplevel the compositor tiles and focuses
+/// (Hyprland/Omarchy opens it like an app). A centered overlay layer-shell
+/// surface that never takes the keyboard is tried first; the plain window is
+/// the fallback for compositors without `wlr-layer-shell`.
+pub(crate) fn open_indicator<V: 'static + gpui::Render>(
+    cx: &mut gpui::App,
+    options: impl Fn(&mut gpui::App) -> gpui::WindowOptions,
+    build: impl Fn(&mut gpui::App) -> gpui::Entity<V>,
+) -> Option<gpui::WindowHandle<V>> {
+    let plain = options(cx);
+    let layer = indicator_layer(options(cx));
+    let alternatives = layer
+        .into_iter()
+        .chain([plain])
+        .map(|options| vec![options])
+        .collect();
+    open_first(alternatives, |options| {
+        cx.open_window(options, |_, cx| build(cx))
+    })
+}
+
+#[cfg(target_os = "linux")]
+fn indicator_layer(options: gpui::WindowOptions) -> Option<gpui::WindowOptions> {
+    use gpui::layer_shell::{Anchor, KeyboardInteractivity, Layer, LayerShellOptions};
+
+    if gpui::guess_compositor() != "Wayland" || layer_shell_refused() {
+        return None;
+    }
+    let Some(gpui::WindowBounds::Windowed(bounds)) = options.window_bounds else {
+        return None;
+    };
+    Some(gpui::WindowOptions {
+        kind: gpui::WindowKind::LayerShell(LayerShellOptions {
+            namespace: options.app_id.clone().unwrap_or_default(),
+            layer: Layer::Overlay,
+            // No anchor: the compositor centres the surface on its output.
+            anchor: Anchor::empty(),
+            keyboard_interactivity: KeyboardInteractivity::None,
+            ..LayerShellOptions::default()
+        }),
+        window_bounds: Some(gpui::WindowBounds::Windowed(gpui::Bounds::new(
+            gpui::Point::default(),
+            bounds.size,
+        ))),
+        ..options
+    })
+}
+
+#[cfg(not(target_os = "linux"))]
+fn indicator_layer(_options: gpui::WindowOptions) -> Option<gpui::WindowOptions> {
+    None
+}
+
 /// Set once the compositor has refused a layer-shell surface.
 ///
 /// GPUI binds the compositor's globals once, when it connects, so a refusal

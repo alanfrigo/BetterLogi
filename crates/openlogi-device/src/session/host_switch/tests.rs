@@ -962,7 +962,10 @@ async fn a_mouse_that_fails_once_still_follows_the_keyboard() {
     session.send(announcement(0, 1));
     let (outcome, writes) = session.outcome().await;
 
-    assert!(matches!(outcome, Ok(HostSwitchSessionOutcome::Departed { .. })));
+    assert!(matches!(
+        outcome,
+        Ok(HostSwitchSessionOutcome::Departed { .. })
+    ));
     assert!(moves_mouse_to_host_1(&writes), "the retry moves the mouse");
 }
 

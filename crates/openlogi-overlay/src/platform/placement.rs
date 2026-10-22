@@ -21,32 +21,44 @@ impl RingPlacement {
     pub(crate) fn capture(cx: &mut gpui::App) -> anyhow::Result<Self> {
         if on_wayland() {
             let displays = cx.displays();
-            if !displays.is_empty() {
-                // A layer surface names its display. An ordinary window goes
-                // where the compositor puts it, and GNOME, which has no layer
-                // shell, stacks every display's window on one (#1901).
-                let layer_shell = displays
-                    .iter()
-                    .filter_map(|display| layer_shell_ring(display.as_ref()))
-                    .map(|options| (options, Placement::AtPointer))
-                    .collect();
-                let covering = displays
-                    .iter()
-                    .map(|display| {
-                        (
-                            covering_window_options(display.as_ref()),
-                            Placement::AtPointer,
-                        )
-                    })
-                    .collect();
+            if displays.is_empty() {
+                // GPUI may not have enumerated outputs yet (Hyprland, early
+                // after start). A positioned window would become a tiled
+                // toplevel there; an output-less layer surface lands on the
+                // compositor's focused output instead.
+                warn!("no displays reported; using a layer surface on the focused output");
+                let layer = layer_shell_ring(None).map(|options| (options, Placement::AtPointer));
                 return Ok(Self {
-                    alternatives: [layer_shell, covering]
+                    alternatives: layer
                         .into_iter()
-                        .filter(|windows: &Vec<_>| !windows.is_empty())
+                        .map(|window| vec![window])
+                        .chain([vec![positioned_window(cx)]])
                         .collect(),
                 });
             }
-            warn!("no displays reported; falling back to a positioned Actions Ring window");
+            // A layer surface names its display. An ordinary window goes
+            // where the compositor puts it, and GNOME, which has no layer
+            // shell, stacks every display's window on one (#1901).
+            let layer_shell = displays
+                .iter()
+                .filter_map(|display| layer_shell_ring(Some(display.id())))
+                .map(|options| (options, Placement::AtPointer))
+                .collect();
+            let covering = displays
+                .iter()
+                .map(|display| {
+                    (
+                        covering_window_options(display.as_ref()),
+                        Placement::AtPointer,
+                    )
+                })
+                .collect();
+            return Ok(Self {
+                alternatives: [layer_shell, covering]
+                    .into_iter()
+                    .filter(|windows: &Vec<_>| !windows.is_empty())
+                    .collect(),
+            });
         }
         Ok(Self {
             alternatives: vec![vec![positioned_window(cx)]],
@@ -248,7 +260,7 @@ const fn layer_shell_notice(_bounds: Option<WindowBounds>) -> Option<WindowOptio
 /// do: GPUI derives them from an integer scale, which is wrong under
 /// fractional scaling.
 #[cfg(target_os = "linux")]
-fn layer_shell_ring(display: &dyn PlatformDisplay) -> Option<WindowOptions> {
+fn layer_shell_ring(display: Option<DisplayId>) -> Option<WindowOptions> {
     use gpui::layer_shell::{Anchor, KeyboardInteractivity, Layer, LayerShellOptions};
 
     if super::layer_shell_refused() {
@@ -265,13 +277,13 @@ fn layer_shell_ring(display: &dyn PlatformDisplay) -> Option<WindowOptions> {
             ..LayerShellOptions::default()
         }),
         window_bounds: Some(WindowBounds::Windowed(Bounds::default())),
-        display_id: Some(display.id()),
+        display_id: display,
         ..ring_window_options()
     })
 }
 
 #[cfg(not(target_os = "linux"))]
-const fn layer_shell_ring(_display: &dyn PlatformDisplay) -> Option<WindowOptions> {
+const fn layer_shell_ring(_display: Option<DisplayId>) -> Option<WindowOptions> {
     None
 }
 

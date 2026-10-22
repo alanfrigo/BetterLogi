@@ -105,9 +105,12 @@ pub(crate) fn present(cx: &mut App, shown: Option<LockKeyChange>) {
         return;
     };
     if open.is_empty() {
-        let options = window_options(cx);
-        if let Err(error) = cx.open_window(options, |_, cx| cx.new(|_| LockKeyView { change })) {
-            warn!(%error, "could not open the lock-key indicator window");
+        if crate::platform::open_indicator(cx, window_options, |cx| {
+            cx.new(|_| LockKeyView { change })
+        })
+        .is_none()
+        {
+            warn!("could not open the lock-key indicator window");
         }
         return;
     }
