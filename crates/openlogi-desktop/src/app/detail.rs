@@ -810,7 +810,7 @@ fn host_switch_card(pal: Palette, cx: &mut Context<AppView>) -> impl IntoElement
     }
     let empty = rows.is_empty();
     PanelCard::new(
-        tr!("device.easy_switch"),
+        tr!("device.easy_switch_follow"),
         Icon::empty().path("action-icons/keyboard.svg"),
         v_flex()
             .w_full()

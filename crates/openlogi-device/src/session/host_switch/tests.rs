@@ -939,6 +939,34 @@ async fn a_rename_makes_the_session_read_the_keyboard_slots_again() {
 }
 
 #[tokio::test]
+async fn a_mouse_that_fails_once_still_follows_the_keyboard() {
+    // An asleep mouse or a receiver busy with the departure fails the first
+    // read; one failure must not leave the mouse on the old host.
+    let keyboard = PairedKeyboard {
+        change_host_version: 2,
+        announces: true,
+        hosts_info: false,
+        analytics_host_key: false,
+    };
+    let failed = std::sync::atomic::AtomicBool::new(false);
+    let session = RunningSession::start(move |request| {
+        if is_request(request, MOUSE_SLOT, MOUSE_CHANGE_HOST_INDEX, 0)
+            && !failed.swap(true, std::sync::atomic::Ordering::Relaxed)
+        {
+            return Some(feature_error(request, HW_ERROR));
+        }
+        bolt_pair(request, keyboard)
+    })
+    .await;
+    session.written(CHANGE_HOST_INDEX, 4, 1).await;
+    session.send(announcement(0, 1));
+    let (outcome, writes) = session.outcome().await;
+
+    assert!(matches!(outcome, Ok(HostSwitchSessionOutcome::Departed { .. })));
+    assert!(moves_mouse_to_host_1(&writes), "the retry moves the mouse");
+}
+
+#[tokio::test]
 async fn an_announced_switch_moves_the_mouse_and_leaves_the_keyboard_alone() {
     let keyboard = PairedKeyboard {
         change_host_version: 2,

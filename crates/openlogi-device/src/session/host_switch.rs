@@ -755,20 +755,65 @@ async fn follow_departure(
         info!(route = %keyboard.route(), host, "device I/O is suspended; linked devices stay");
         return;
     }
-    for target in targets {
-        match follow_on(target, departure, registry, channel_pool).await {
-            Ok(Some(slot)) => {
-                info!(route = %target, host = slot, "linked device followed the keyboard");
-            }
-            Ok(None) => {
-                debug!(route = %target, host, "linked device already uses the keyboard's host");
-            }
-            Err(error) => {
-                info!(%error, route = %target, host, "linked device could not follow the keyboard");
+    let mut pending: Vec<&DeviceRoute> = targets.iter().collect();
+    for (round, delay) in FOLLOW_RETRY_DELAYS.iter().enumerate() {
+        if !delay.is_zero() {
+            tokio::time::sleep(*delay).await;
+        }
+        if device_io.ensure_allowed().is_err() {
+            info!(route = %keyboard.route(), host, "device I/O is suspended; linked devices stay");
+            return;
+        }
+        let mut failed = Vec::new();
+        for target in pending {
+            match follow_on(target, departure, registry, channel_pool).await {
+                Ok(Some(slot)) => {
+                    info!(route = %target, host = slot, round, "linked device followed the keyboard");
+                }
+                Ok(None) => {
+                    debug!(route = %target, host, "linked device already uses the keyboard's host");
+                }
+                Err(error) if is_retryable(&error) => {
+                    debug!(%error, route = %target, host, round, "linked device could not follow yet; retrying");
+                    failed.push(target);
+                }
+                Err(error) => {
+                    info!(%error, route = %target, host, "linked device cannot follow the keyboard");
+                }
             }
         }
+        if failed.is_empty() {
+            return;
+        }
+        pending = failed;
+    }
+    for target in pending {
+        info!(route = %target, host, "linked device could not follow the keyboard after retries");
     }
 }
+
+/// Backoff before each attempt to move a linked device. A mouse that is
+/// asleep, or a receiver still busy with the keyboard's departure, answers
+/// within a few rounds; a single failed write must not leave it behind.
+// ponytail: fixed ~8 s window; a mouse asleep longer stays put. Upgrade: let the
+// agent replay the move when the target reappears in inventory.
+const FOLLOW_RETRY_DELAYS: [Duration; 6] = [
+    Duration::ZERO,
+    Duration::from_millis(250),
+    Duration::from_millis(500),
+    Duration::from_secs(1),
+    Duration::from_secs(2),
+    Duration::from_secs(4),
+];
+
+/// Whether a failed follow may succeed on a later attempt. An unpaired slot or
+/// a device without `ChangeHost` never will.
+const fn is_retryable(error: &HostSwitchError) -> bool {
+    !matches!(
+        error,
+        HostSwitchError::HostSlotEmpty { .. } | HostSwitchError::UnsupportedKeyboard
+    )
+ }
 
 /// Move `target` after the keyboard of `departure`. Returns the slot that it
 /// switched to, or `None` when it already used that slot.
@@ -857,26 +902,46 @@ pub async fn switch_linked_hosts(
     let keyboard_change =
         prepare_host_change_with(&mut keyboard_device, keyboard.device_index(), host).await?;
     let keyboard_hosts = read_host_table(&mut keyboard_device).await;
-    for target in targets {
-        let prepared = prepare_host_change(
-            target,
-            keyboard_hosts.as_ref(),
-            host,
-            keyboard,
-            &channel,
-            channel_pool,
-        )
-        .await;
-        match prepared {
-            Ok((slot, change)) => {
-                if let Err(error) = apply_host_change(change).await {
-                    debug!(%error, route = %target, host = slot, "linked device host switch failed");
+    // The keyboard waits for its mice, so a briefly unreachable one is retried
+    // a few short rounds before the keyboard leaves without it.
+    let mut pending: Vec<&DeviceRoute> = targets.iter().collect();
+    for (round, delay) in FOLLOW_RETRY_DELAYS[..4].iter().enumerate() {
+        if pending.is_empty() {
+            break;
+        }
+        if !delay.is_zero() {
+            tokio::time::sleep(*delay).await;
+        }
+        let mut failed = Vec::new();
+        for target in pending {
+            let prepared = prepare_host_change(
+                target,
+                keyboard_hosts.as_ref(),
+                host,
+                keyboard,
+                &channel,
+                channel_pool,
+            )
+            .await;
+            let result = match prepared {
+                Ok((_, change)) => apply_host_change(change).await.map(drop),
+                Err(error) => Err(error),
+            };
+            match result {
+                Ok(()) => {}
+                Err(error) if is_retryable(&error) => {
+                    debug!(%error, route = %target, host, round, "linked device host switch failed; retrying");
+                    failed.push(target);
+                }
+                Err(error) => {
+                    info!(%error, route = %target, host, "linked device cannot follow the keyboard");
                 }
             }
-            Err(error) => {
-                debug!(%error, route = %target, host, "linked device host switch preparation failed");
-            }
         }
+        pending = failed;
+    }
+    for target in pending {
+        info!(route = %target, host, "linked device could not follow the keyboard after retries");
     }
     let changed = apply_host_change(keyboard_change).await?;
     if changed {
