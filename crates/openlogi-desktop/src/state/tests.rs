@@ -55,6 +55,7 @@ mod dpi;
 mod easy_switch;
 mod fn_lock;
 mod light_adoption;
+mod host_switch;
 mod lighting;
 mod os_layout;
 mod pointer_speed;
