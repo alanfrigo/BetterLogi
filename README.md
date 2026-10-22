@@ -25,8 +25,8 @@ ship yet:
   Omarchy they no longer open, tile, or take focus like an app window.
 - **Optional lock-key indicator.** Turn the Caps Lock indicator off in
   **Settings → General → Lock key notifications**.
-- **Updates from this repository.** The app updates itself from the
-  [BetterLogi releases](https://github.com/alanfrigo/BetterLogi/releases).
+- **Releases from this repository.** Installers and in-app updates come from
+  the [BetterLogi releases](https://github.com/alanfrigo/BetterLogi/releases).
 
 Runs on Linux, macOS, and Windows. Linux, including Hyprland and Omarchy, is
 the platform BetterLogi is developed on.
@@ -85,7 +85,7 @@ controls a device supports.
 | Per-application profiles | X11, wlroots (sway, Hyprland), GNOME with the [companion extension](crates/betterlogi-hook/gnome-shell-extension/README.md) | ✓ | ✓ |
 | Actions Ring and indicators as overlays | Wayland layer shell (Hyprland, sway, KDE), window elsewhere | ✓ | ✓ |
 | Media keys | D-Bus MPRIS | Native | Native |
-| In-app updates | Built-in | Sparkle | Built-in |
+| In-app updates | — (re-run the installer) | Sparkle | Built-in |
 
 ## Install
 
@@ -117,11 +117,11 @@ To build from source, see [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ### Updates
 
-With **Settings → Updates → Check for updates** on, BetterLogi checks
-[this repository's releases](https://github.com/alanfrigo/BetterLogi/releases)
+On macOS and Windows, with **Settings → Updates → Check for updates** on,
+BetterLogi checks [this repository's releases](https://github.com/alanfrigo/BetterLogi/releases)
 once per launch and installs only an update whose signature matches the key
-built into the app. Linux packages installed from your distribution's package
-manager update through the package manager.
+built into the app. On Linux the packages are not updated in place: run the
+install command above again to move to the newest release.
 
 ### Omarchy
 

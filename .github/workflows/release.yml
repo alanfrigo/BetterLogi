@@ -91,7 +91,10 @@ jobs:
       contents: read
       id-token: write # build.yml mints an OIDC token for Azure Artifact Signing.
     with:
-      sign: true
+      # Signing needs the Apple and Azure credentials (1Password). Set the
+      # repository variable BETTERLOGI_SIGN_RELEASES to `true` only once they
+      # exist; otherwise the installers ship unsigned and still publish.
+      sign: ${{ vars.BETTERLOGI_SIGN_RELEASES == 'true' }}
       build_version: ${{ needs.version.outputs.build_version }}
 
   release-notes:
@@ -152,7 +155,7 @@ jobs:
           # Optional override; unset, generate.ts picks the endpoint from the
           # credential kind.
           CODEX_ENDPOINT: ${{ vars.CODEX_ENDPOINT }}
-          GH_TOKEN: ${{ steps.release_notes_app_token.outputs.token }}
+          GH_TOKEN: ${{ steps.release_notes_app_token.outputs.token || github.token }}
           PREVIOUS_TAG: ${{ needs.version.outputs.previous_tag }}
         run: |
           set -euo pipefail
