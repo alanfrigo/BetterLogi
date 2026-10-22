@@ -1,8 +1,8 @@
 ---
 paths:
-  - "crates/openlogi-desktop/**"
-  - "crates/openlogi-ui/**"
-  - "crates/openlogi-overlay/**"
+  - "crates/betterlogi-desktop/**"
+  - "crates/betterlogi-ui/**"
+  - "crates/betterlogi-overlay/**"
 ---
 
 # GUI (GPUI + gpui-component)
@@ -13,18 +13,18 @@ paths:
 - Load [`gpui-kit-design-guides`](../../.agents/skills/gpui-kit-design-guides/SKILL.md)
   before layout, styling, interaction, copy, or design review.
 - Follow their Coding Guides and Design Guides as the default practice. Prefer
-  those guides over conflicting reference examples or existing OpenLogi patterns.
-  The constraints below cover only OpenLogi integration; do not duplicate general
+  those guides over conflicting reference examples or existing BetterLogi patterns.
+  The constraints below cover only BetterLogi integration; do not duplicate general
   GPUI rules here.
 
-## OpenLogi integration
+## BetterLogi integration
 
 - **Process ownership:** desktop and overlay are IPC clients; the agent owns HID
-  and input I/O. The overlay must not depend on `openlogi-desktop`. Put shared
-  presentation in `openlogi-ui`; keep desktop-only widgets and assets in desktop.
+  and input I/O. The overlay must not depend on `betterlogi-desktop`. Put shared
+  presentation in `betterlogi-ui`; keep desktop-only widgets and assets in desktop.
   Evaluate shared dependencies against both consumers.
 - **Dependency compatibility:** use `Cargo.toml` and `Cargo.lock` to verify API
-  signatures, imports, and test support. OpenLogi currently uses direct Kit crates
+  signatures, imports, and test support. BetterLogi currently uses direct Kit crates
   rather than the umbrella `gpui-kit` crate. Treat migrations as explicit, tested
   changes, not a side effect of copying bootstrap examples. Keep GPUI core/platform
   versions aligned, Kit crates on one release tag, and one GPUI package identity.
@@ -36,16 +36,16 @@ paths:
   existing screens. `control_button`, `control_input`, and `control_select` apply
   `CONTROL_H` (30 px); `Palette` and the component theme must agree on `ThemeMode`.
   Adopt upstream improvements in these owners rather than patching each call site.
-  Shared SVGs use `openlogi-ui/action-icons/` and its `ActionIcons` asset source;
+  Shared SVGs use `betterlogi-ui/action-icons/` and its `ActionIcons` asset source;
   keep shared paths such as `RING_CANCEL_ICON` identical in the preview and overlay.
 - **Live language changes:** follow [i18n.md](i18n.md). Each localized binary generates
-  its own backend for `openlogi-ui/locales/`. Use `localize_placeholder` for cached
+  its own backend for `betterlogi-ui/locales/`. Use `localize_placeholder` for cached
   input placeholders and `StateEvent::LanguageChanged` for other cached text.
   Run menu/window effects after `AppState` updates or defer them to avoid re-entry.
 
 ## Verify in this repository
 
-Load [testing-openlogi-ui](../../.agents/skills/testing-openlogi-ui/SKILL.md) for
+Load [testing-betterlogi-ui](../../.agents/skills/testing-betterlogi-ui/SKILL.md) for
 focused GPUI tests, the dev bundle, mock agent, and component gallery. Use the root
 [AGENTS.md](../../AGENTS.md) for required checks; do not substitute upstream
 `script/check-ai` or starter-package commands. Exercise representative affected states,

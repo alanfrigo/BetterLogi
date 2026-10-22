@@ -10,7 +10,7 @@ let
   xcodeSdkRoot = "${xcodeDeveloperDir}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
   requireXcodeMetal = pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
     if ! /usr/bin/xcrun --find metal >/dev/null 2>&1; then
-      echo "OpenLogi GUI builds require full Xcode with Metal tools, not only Command Line Tools." >&2
+      echo "BetterLogi GUI builds require full Xcode with Metal tools, not only Command Line Tools." >&2
       echo "Install Xcode, then run: sudo xcode-select -s ${xcodeDeveloperDir}" >&2
       exit 1
     fi
@@ -105,19 +105,19 @@ in
   '';
 
   tasks = {
-    "openlogi:run" = {
+    "betterlogi:run" = {
       description = "List connected Logitech HID++ devices.";
-      exec = "cargo run -p openlogi -- list";
+      exec = "cargo run -p betterlogi -- list";
     };
-    "openlogi:gui" = {
+    "betterlogi:gui" = {
       description = "Run the desktop app.";
       exec = ''
         set -e
         ${requireXcodeMetal}
-        cargo run -p openlogi-desktop
+        cargo run -p betterlogi-desktop
       '';
     };
-    "openlogi:check" = {
+    "betterlogi:check" = {
       description = "Run fmt, clippy, tests, and rustdoc.";
       exec = ''
         set -e
@@ -130,12 +130,12 @@ in
         # it. The GPUI crates are excluded — documenting them would pull in the
         # whole graphics toolchain.
         RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps \
-          --document-private-items --exclude openlogi-ui \
-          --exclude openlogi-desktop --exclude openlogi-overlay \
-          --exclude openlogi-agent
+          --document-private-items --exclude betterlogi-ui \
+          --exclude betterlogi-desktop --exclude betterlogi-overlay \
+          --exclude betterlogi-agent
       '';
     };
-    "openlogi:ci" = {
+    "betterlogi:ci" = {
       description = "Run every GitHub Actions CI job this host can reproduce.";
       exec = ''
         set -e
@@ -143,7 +143,7 @@ in
         cargo run -p xtask -- ci
       '';
     };
-    "openlogi:i18n-upload" = {
+    "betterlogi:i18n-upload" = {
       description = "Upload en.toml sources and per-language translations to Crowdin.";
       exec = ''
         set -e
@@ -151,7 +151,7 @@ in
         ${pkgs.crowdin-cli}/bin/crowdin upload translations --config .config/crowdin.yml
       '';
     };
-    "openlogi:i18n-download" = {
+    "betterlogi:i18n-download" = {
       description = "Download Crowdin translations, merge into complete catalogs, run i18n tests.";
       exec = ''
         set -e
@@ -159,36 +159,36 @@ in
         ${pkgs.python3}/bin/python3 .github/scripts/i18n/merge_crowdin_download.py --self-test
         before="$(mktemp -d)"
         trap 'rm -rf "$before"' EXIT
-        cp crates/openlogi-ui/locales/*.toml "$before/"
+        cp crates/betterlogi-ui/locales/*.toml "$before/"
         ${pkgs.crowdin-cli}/bin/crowdin download --config .config/crowdin.yml \
           --skip-untranslated-strings
         ${pkgs.python3}/bin/python3 .github/scripts/i18n/merge_crowdin_download.py \
           --before "$before" \
-          --locales crates/openlogi-ui/locales \
-          --en crates/openlogi-ui/locales/en.toml
-        cargo test -p openlogi-desktop i18n
+          --locales crates/betterlogi-ui/locales \
+          --en crates/betterlogi-ui/locales/en.toml
+        cargo test -p betterlogi-desktop i18n
       '';
     };
-    "openlogi:check-windows" = {
+    "betterlogi:check-windows" = {
       description = "Lint the Windows code paths locally (check-only cross lint).";
       # The crate list, the `cargo-clippy` vs `cargo clippy` trap, and why this
       # is not CI's `clippy (windows)` job all live in one place now:
       # `WINDOWS_LINT_CRATES` in xtask/src/commands/ci/jobs.rs.
       exec = "cargo run -p xtask -- ci clippy-windows";
     };
-    "openlogi:assets" = {
+    "betterlogi:assets" = {
       description = "Sync device assets.";
-      exec = "cargo run -p openlogi --release -- assets sync";
+      exec = "cargo run -p betterlogi --release -- assets sync";
     };
-    "openlogi:bundle" = {
-      description = "Build OpenLogi.app.";
+    "betterlogi:bundle" = {
+      description = "Build BetterLogi.app.";
       exec = ''
         set -e
         ${requireXcodeMetal}
         cargo run -p xtask -- macos bundle
       '';
     };
-    "openlogi:dmg" = {
+    "betterlogi:dmg" = {
       description = "Build a macOS DMG.";
       exec = ''
         set -e

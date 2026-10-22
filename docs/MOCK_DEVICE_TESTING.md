@@ -6,12 +6,12 @@ The root corpus contains reviewed captures with automatic device, Agent, IPC, an
 
 ## Why this needs more than one mock
 
-OpenLogi already has two useful but separate hardware-free paths:
+BetterLogi already has two useful but separate hardware-free paths:
 
-- `openlogi-agent-mock` implements the agent IPC service from a hard-coded,
+- `betterlogi-agent-mock` implements the agent IPC service from a hard-coded,
   mutable inventory. It is good for manual GUI development, but it bypasses
   device enumeration and HID++ parsing.
-- `openlogi-device::replay` supplies cassette-backed channels and mutable
+- `betterlogi-device::replay` supplies cassette-backed channels and mutable
   topology below production device code. Focused unit tests still use concise
   scripted responders where a persisted cassette would obscure the contract.
 
@@ -100,8 +100,8 @@ contract rather than surface only as a GUI mismatch.
 
 | Layer | Production code exercised | Data source | Primary purpose |
 |---|---|---|---|
-| Protocol codec | `openlogi-hidpp` message/feature decoders | Hand-written bytes | Byte layout and unknown-value handling |
-| Device operation | `openlogi-device` over a replay raw channel | HID cassette | Feature lookup, reads, writes, fallback |
+| Protocol codec | `betterlogi-hidpp` message/feature decoders | Hand-written bytes | Byte layout and unknown-value handling |
+| Device operation | `betterlogi-device` over a replay raw channel | HID cassette | Feature lookup, reads, writes, fallback |
 | Discovery/recovery | `Enumerator` over a replay `HidBackend` | Profile + cassette + scenario | Topology, cache, ledger, channel lifecycle |
 | Agent semantics | `MockAgent` initially; real agent-core later | Device profile + scenario | Snapshot and command contract |
 | Desktop projection | Desktop state merge/render seams | Agent snapshot derived from profile | Panels, routes, online/offline presentation |
@@ -147,7 +147,7 @@ Fixture contracts and device replay have different dependency boundaries. The
 schema is a published, host-free crate consumed by capture, verification, and
 semantic mocks; replay stays beside the `HidBackend` contract it implements.
 
-### `openlogi-fixture`
+### `betterlogi-fixture`
 
 Owns the persisted contract and its pure verification:
 
@@ -157,11 +157,11 @@ Owns the persisted contract and its pure verification:
 - The packaged canonical synthetic profile used by the no-argument mock.
 
 It performs no file I/O, host access, or async work and depends only on
-`openlogi-core` plus serialization/error support. This keeps the published CLI
+`betterlogi-core` plus serialization/error support. This keeps the published CLI
 dependency closure valid and lets schema checks run without pulling in HID++
 transport.
 
-### `openlogi-device`
+### `betterlogi-device`
 
 The `replay` module owns runtime behavior over fixture cassettes:
 
@@ -176,7 +176,7 @@ unit tests; a fixture should not make small tests harder to read.
 This remains portable: it knows HID++ and `HidBackend`, not `async-hid`, paths,
 files, clocks, or a host OS.
 
-### `openlogi-hid`
+### `betterlogi-hid`
 
 Own native recording because this is where `async-hid` channels are turned
 into `HidppChannel`s and raw writers:
@@ -193,21 +193,21 @@ The process-wide native HID manager remains shared. A recorder may own a
 separate backend facade and handle cache, but it must not create a second host
 HID manager per operation.
 
-### `openlogi-cli`
+### `betterlogi-cli`
 
 Own user interaction and file I/O:
 
-- `openlogi fixture contribute`
-- `openlogi fixture record profile`
-- `openlogi fixture record case`
-- `openlogi fixture verify <fixture-directory>`
+- `betterlogi fixture contribute`
+- `betterlogi fixture record profile`
+- `betterlogi fixture record case`
+- `betterlogi fixture verify <fixture-directory>`
 - Strict target selection, safety warnings, sanitization report, case
   self-replay, atomic publication, and strict corpus loading.
 
 `snapshot` already means camera capture, so fixture commands must not reuse
 that name.
 
-### `openlogi-agent-mock`
+### `betterlogi-agent-mock`
 
 Load a semantic profile and construct its own current `AgentStatus`, generation,
 camera, foreground-app, and pairing state. A captured `AgentSnapshot` is not the
@@ -218,7 +218,7 @@ The built-in scripted inventory remains the no-argument default. Manual demo
 mode can retain moving battery/app/camera behavior. Test mode freezes those
 inputs and changes them only through a scenario.
 
-### `openlogi-agent-core` (later)
+### `betterlogi-agent-core` (later)
 
 When full-agent replay has a concrete test that needs it, introduce one
 coherent hardware runtime value rather than adding backend parameters one call
@@ -324,7 +324,7 @@ fixtures/devices/
 
 The built-in profile-only synthetic fixture is packaging data rather than
 captured corpus. It lives under
-`crates/openlogi-fixture/fixtures/devices/openlogi-canonical-synthetic-001/`
+`crates/betterlogi-fixture/fixtures/devices/betterlogi-canonical-synthetic-001/`
 so crates.io packages remain self-contained. It must not be copied into the
 root corpus or presented as physical-hardware evidence.
 
@@ -395,7 +395,7 @@ Split cases because a full inventory probe can contain hundreds of exchanges
 and changes more often than a focused DPI read. A regression should identify
 the operation that no longer matches.
 
-Run `openlogi fixture verify <fixture-directory>` before review. The loader
+Run `betterlogi fixture verify <fixture-directory>` before review. The loader
 accepts only a real, non-symlink directory whose name equals the manifest ID,
 requires exactly `manifest.json`, `profile.json`, and the complete declared
 `cases/*.json` set, and rejects unknown files, unsafe case names, symlinks, and
@@ -406,7 +406,7 @@ establish semantic or physical correctness.
 The CLI corpus tests discover and strictly verify every directory under both
 `fixtures/devices/` and the packaged synthetic corpus. The root corpus may be
 absent until the first contribution; once present, every entry must be a valid
-fixture directory. Run `cargo test -p openlogi-cli fixture::verify` locally.
+fixture directory. Run `cargo test -p betterlogi-cli fixture::verify` locally.
 
 ## Recording model
 
@@ -418,7 +418,7 @@ and already holds stable channels. This mode records no raw reports and needs no
 new IPC method.
 
 **Raw case capture** is a controlled direct diagnostic operation. It uses the
-same ownership model as the existing `openlogi diag` commands: discover devices,
+same ownership model as the existing `betterlogi diag` commands: discover devices,
 select one target, open it, run one named read operation, and exit. Discovery
 uses production enumeration, which may write receiver notification flags
 (register `0x00`) and request arrival reports (register `0x02`) on connected
@@ -437,11 +437,11 @@ release the lock. It does not exclude Options+ or other direct diagnostic tools.
 
 ### Contribution wizard
 
-`openlogi fixture contribute` combines the safe capture modes without changing
+`betterlogi fixture contribute` combines the safe capture modes without changing
 their ownership boundaries:
 
 ```sh
-openlogi fixture contribute \
+betterlogi fixture contribute \
   --id mx-master-3s-001 \
   --name "MX Master 3S" \
   --device "MX Master 3S" \
@@ -657,7 +657,7 @@ Use immediate, controlled outcomes for most failures:
 - late response released after a barrier.
 
 A “no response” test otherwise waits for the production five-second channel
-deadline. Keep timeout mechanics in focused `openlogi-hidpp` tests that call the
+deadline. Keep timeout mechanics in focused `betterlogi-hidpp` tests that call the
 configurable timeout with a small budget. Higher-layer fixture tests should use
 an equivalent immediate failure unless the deadline itself is their subject.
 
@@ -675,7 +675,7 @@ Race tests should synchronize on explicit barriers such as “request written”
 
 ## Test suites generated from the corpus
 
-The current implementation discovers all four contributed specimens and replays all 28 declared reads. `openlogi-fixture` owns strict filesystem loading behind its optional `fs` feature; the default schema and privacy APIs remain host-free. `ReplayTopology::for_device` owns capture and corpus topology. `ReplayBackend::from_profile` supports the single-device HID++ contributions currently recorded and rejects unsupported target shapes.
+The current implementation discovers all four contributed specimens and replays all 28 declared reads. `betterlogi-fixture` owns strict filesystem loading behind its optional `fs` feature; the default schema and privacy APIs remain host-free. `ReplayTopology::for_device` owns capture and corpus topology. `ReplayBackend::from_profile` supports the single-device HID++ contributions currently recorded and rejects unsupported target shapes.
 
 CLI operation expectations, Agent lifecycle gates, mock RPC/socket behavior, and desktop projection are mandatory workspace tests. The following sections also describe extensions that require additional captures: firmware, complete enumeration sessions, physical writes, and hardware-in-loop validation are not covered by the current read corpus. See [the corpus contract](../fixtures/README.md#automatic-verification) for the exact boundary of each executed suite.
 
@@ -693,7 +693,7 @@ One test discovers every fixture directory and verifies:
 ### Device operation contracts
 
 For each relevant case, construct a replay channel/backend and invoke the same
-public `openlogi-device` operation production uses. Assert the independently
+public `betterlogi-device` operation production uses. Assert the independently
 reviewed semantic result, exact required writes, and complete cassette
 consumption.
 
@@ -785,7 +785,7 @@ hardware, and an altered request fails with a useful unmatched-report message.
 
 - Extract the hard-coded mock inventory into the profile/state model.
 - Keep it as the built-in default.
-- Add `openlogi-agent-mock --fixture` and frozen test time.
+- Add `betterlogi-agent-mock --fixture` and frozen test time.
 - Add profile validation and setting round-trip tests.
 - Add the desktop state-injection seam needed to consume a profile-derived
   observation.
@@ -846,7 +846,7 @@ The smallest implementation that validates the architecture is:
 2. strict replay of a direct mouse channel and a Bolt receiver channel;
 3. production `get_dpi_info` and inventory probe assertions;
 4. the current mock mouse represented as a profile and loaded by
-   `openlogi-agent-mock`;
+   `betterlogi-agent-mock`;
 5. no recording, writes, pairing, serialized scenario language, or full-agent
    dependency injection yet.
 

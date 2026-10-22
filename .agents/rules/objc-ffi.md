@@ -1,24 +1,24 @@
 ---
 paths:
-  - "crates/openlogi-desktop/src/platform/**"
-  - "crates/openlogi-overlay/src/platform.rs"
-  - "crates/openlogi-permissions/**"
-  - "crates/openlogi-camera/**"
-  - "crates/openlogi-agent/src/activity_macos.rs"
-  - "crates/openlogi-agent/src/tray.rs"
-  - "crates/openlogi-agent/src/status_item.rs"
-  - "crates/openlogi-agent/src/lifecycle/armed_session.rs"
-  - "crates/openlogi-agent-core/src/watchers/camera.rs"
-  - "crates/openlogi-hook/src/macos.rs"
-  - "crates/openlogi-hook/src/macos/**"
-  - "crates/openlogi-inject/src/inject/macos.rs"
-  - "crates/openlogi-inject/src/inject/macos/**"
-  - "crates/openlogi-hid/src/permissions.rs"
+  - "crates/betterlogi-desktop/src/platform/**"
+  - "crates/betterlogi-overlay/src/platform.rs"
+  - "crates/betterlogi-permissions/**"
+  - "crates/betterlogi-camera/**"
+  - "crates/betterlogi-agent/src/activity_macos.rs"
+  - "crates/betterlogi-agent/src/tray.rs"
+  - "crates/betterlogi-agent/src/status_item.rs"
+  - "crates/betterlogi-agent/src/lifecycle/armed_session.rs"
+  - "crates/betterlogi-agent-core/src/watchers/camera.rs"
+  - "crates/betterlogi-hook/src/macos.rs"
+  - "crates/betterlogi-hook/src/macos/**"
+  - "crates/betterlogi-inject/src/inject/macos.rs"
+  - "crates/betterlogi-inject/src/inject/macos/**"
+  - "crates/betterlogi-hid/src/permissions.rs"
 ---
 
 # macOS native FFI
 
-OpenLogi's Objective-C FFI runs on **`objc2`** (0.6 / framework crates 0.3):
+BetterLogi's Objective-C FFI runs on **`objc2`** (0.6 / framework crates 0.3):
 `Retained<T>` smart pointers, typed framework objects, `define_class!` for
 subclasses. It is spread across crates rather than one directory — the GUI owns
 almost none of it. The whole workspace's native macOS surface is exactly these
@@ -26,31 +26,31 @@ files; **keep this table in sync when you add or move one**:
 
 | File | What it carries |
 |---|---|
-| `openlogi-agent/src/activity_macos.rs` | the device-I/O gate's levels: the `IOPMConnection` powerd subscription (hand-declared SPI, see below) and the `CGSessionCopyCurrentDictionary` console read |
-| `openlogi-agent/src/status_item.rs` | safe `objc2` wrappers over `NSStatusItem` / `NSMenu` / `NSMenuItem` |
-| `openlogi-agent/src/tray.rs` | the menu-bar semantics, `MenuTarget` + `SessionTarget` (`define_class!`), the Accessory `NSApplication` loop, the `NSWorkspace` session (fast-user-switch) notifications |
-| `openlogi-agent-core/src/watchers/camera.rs` | the CoreMediaIO "camera is running" property read |
-| `openlogi-camera/src/capture_macos.rs` | `AVCaptureSession` capture + the `define_class!` frame delegate, and the Camera TCC prompt |
-| `openlogi-camera/src/macos.rs` | `AVCaptureDevice` enumeration (`class!` + `msg_send!`) |
-| `openlogi-camera/src/uvc_macos.rs`, `.../uvc_macos/iokit.rs` | IOKit USB / UVC control transfers; every `unsafe` in the macOS UVC backend lives in `iokit.rs` |
-| `openlogi-desktop/src/platform/registration/macos.rs` | `SMAppService` registration of the agent's launchd service (the login-item side of the agent lifecycle; the GUI must own it — the API resolves the plist against the calling app's bundle) |
-| `openlogi-desktop/src/platform/os.rs` | `NSProcessInfo` OS version + the `NSAppearance` titlebar sync |
-| `openlogi-hid/src/permissions.rs` | `IOHIDCheckAccess` / `IOHIDRequestAccess` (the prompting half of Input Monitoring) |
-| `openlogi-hook/src/macos.rs` | the CGEventTap (on `core-graphics`, see below), the Accessibility-trust check/prompt, the off-tap `NSWorkspace` frontmost-app read, and the `CGGetEventTapList` enumeration |
-| `openlogi-hook/src/macos/foreground.rs` | the `NSWorkspace` activation observer, the `NSRunningApplication` conversion behind every frontmost-app read, and the Safari PID snapshot |
-| `openlogi-hook/src/macos/secure_input.rs` | the Secure Event Input read: `IsSecureEventInputEnabled` (hand-declared, see below) and the `kCGSSessionSecureInputPID` entry of `CGSessionCopyCurrentDictionary`, named through `foreground.rs`'s `NSRunningApplication` conversion |
-| `openlogi-hook/src/macos/sender.rs` | the HID sender-id lookup and the IOKit registry walk that resolves it to a device |
-| `openlogi-inject/src/inject/macos.rs` | CGEvent key and click synthesis, media-key `NSEvent`s |
-| `openlogi-inject/src/inject/macos/scroll.rs` | CGEvent scroll synthesis, including the continuous-scroll phase fields |
-| `openlogi-inject/src/inject/macos/ax.rs` | the shared `AXUIElement` attribute reads (`CFRetained` adoption of the Copy-rule out-pointer) and `AXChildren` iteration |
-| `openlogi-inject/src/inject/macos/browser.rs` | Safari's toolbar-button navigation over `ax.rs`, and the off-thread `NSWorkspace` Safari validation |
-| `openlogi-inject/src/inject/macos/menu_shortcut.rs` | the hidden probe `NSMenu` AppKit remaps for the keyboard layout, and pressing the frontmost app's matching menu item through AX |
-| `openlogi-inject/src/inject/macos/{app_services,dock,symbolic_hotkey}.rs` | the `dlopen`'d private SPIs: `CoreDockSendNotification` and the CGS symbolic-hotkey trio |
-| `openlogi-inject/src/inject/macos/keyboard_layout.rs` | the active keyboard layout's `uchr` data (Text Input Source Services, read on the main thread) and `UCKeyTranslate` over it |
-| `openlogi-inject/src/inject/macos/main_thread.rs` | the bounded hand-off of main-thread work from the action worker to the main queue (`dispatch2`) |
-| `openlogi-inject/src/inject/macos/virtual_keyboard/device.rs` | the `IOHIDUserDevice` virtual keyboard that key synthesis types through: its creation (which needs the `com.apple.developer.hid.virtual.device` entitlement) and its timestamped input reports. The report state in `virtual_keyboard.rs` above it is safe code |
-| `openlogi-overlay/src/platform.rs` | the Actions Ring helper's window policy: accessory activation, non-activating panel, the `NSEvent` global click-away monitor (`block2`), and `CGGetActiveDisplayList` / `CGDisplayBounds` |
-| `openlogi-permissions/src/macos.rs` | non-prompting permission reads + System-Settings deep links; `+[CBManager authorization]` via an `AnyClass` lookup |
+| `betterlogi-agent/src/activity_macos.rs` | the device-I/O gate's levels: the `IOPMConnection` powerd subscription (hand-declared SPI, see below) and the `CGSessionCopyCurrentDictionary` console read |
+| `betterlogi-agent/src/status_item.rs` | safe `objc2` wrappers over `NSStatusItem` / `NSMenu` / `NSMenuItem` |
+| `betterlogi-agent/src/tray.rs` | the menu-bar semantics, `MenuTarget` + `SessionTarget` (`define_class!`), the Accessory `NSApplication` loop, the `NSWorkspace` session (fast-user-switch) notifications |
+| `betterlogi-agent-core/src/watchers/camera.rs` | the CoreMediaIO "camera is running" property read |
+| `betterlogi-camera/src/capture_macos.rs` | `AVCaptureSession` capture + the `define_class!` frame delegate, and the Camera TCC prompt |
+| `betterlogi-camera/src/macos.rs` | `AVCaptureDevice` enumeration (`class!` + `msg_send!`) |
+| `betterlogi-camera/src/uvc_macos.rs`, `.../uvc_macos/iokit.rs` | IOKit USB / UVC control transfers; every `unsafe` in the macOS UVC backend lives in `iokit.rs` |
+| `betterlogi-desktop/src/platform/registration/macos.rs` | `SMAppService` registration of the agent's launchd service (the login-item side of the agent lifecycle; the GUI must own it — the API resolves the plist against the calling app's bundle) |
+| `betterlogi-desktop/src/platform/os.rs` | `NSProcessInfo` OS version + the `NSAppearance` titlebar sync |
+| `betterlogi-hid/src/permissions.rs` | `IOHIDCheckAccess` / `IOHIDRequestAccess` (the prompting half of Input Monitoring) |
+| `betterlogi-hook/src/macos.rs` | the CGEventTap (on `core-graphics`, see below), the Accessibility-trust check/prompt, the off-tap `NSWorkspace` frontmost-app read, and the `CGGetEventTapList` enumeration |
+| `betterlogi-hook/src/macos/foreground.rs` | the `NSWorkspace` activation observer, the `NSRunningApplication` conversion behind every frontmost-app read, and the Safari PID snapshot |
+| `betterlogi-hook/src/macos/secure_input.rs` | the Secure Event Input read: `IsSecureEventInputEnabled` (hand-declared, see below) and the `kCGSSessionSecureInputPID` entry of `CGSessionCopyCurrentDictionary`, named through `foreground.rs`'s `NSRunningApplication` conversion |
+| `betterlogi-hook/src/macos/sender.rs` | the HID sender-id lookup and the IOKit registry walk that resolves it to a device |
+| `betterlogi-inject/src/inject/macos.rs` | CGEvent key and click synthesis, media-key `NSEvent`s |
+| `betterlogi-inject/src/inject/macos/scroll.rs` | CGEvent scroll synthesis, including the continuous-scroll phase fields |
+| `betterlogi-inject/src/inject/macos/ax.rs` | the shared `AXUIElement` attribute reads (`CFRetained` adoption of the Copy-rule out-pointer) and `AXChildren` iteration |
+| `betterlogi-inject/src/inject/macos/browser.rs` | Safari's toolbar-button navigation over `ax.rs`, and the off-thread `NSWorkspace` Safari validation |
+| `betterlogi-inject/src/inject/macos/menu_shortcut.rs` | the hidden probe `NSMenu` AppKit remaps for the keyboard layout, and pressing the frontmost app's matching menu item through AX |
+| `betterlogi-inject/src/inject/macos/{app_services,dock,symbolic_hotkey}.rs` | the `dlopen`'d private SPIs: `CoreDockSendNotification` and the CGS symbolic-hotkey trio |
+| `betterlogi-inject/src/inject/macos/keyboard_layout.rs` | the active keyboard layout's `uchr` data (Text Input Source Services, read on the main thread) and `UCKeyTranslate` over it |
+| `betterlogi-inject/src/inject/macos/main_thread.rs` | the bounded hand-off of main-thread work from the action worker to the main queue (`dispatch2`) |
+| `betterlogi-inject/src/inject/macos/virtual_keyboard/device.rs` | the `IOHIDUserDevice` virtual keyboard that key synthesis types through: its creation (which needs the `com.apple.developer.hid.virtual.device` entitlement) and its timestamped input reports. The report state in `virtual_keyboard.rs` above it is safe code |
+| `betterlogi-overlay/src/platform.rs` | the Actions Ring helper's window policy: accessory activation, non-activating panel, the `NSEvent` global click-away monitor (`block2`), and `CGGetActiveDisplayList` / `CGDisplayBounds` |
+| `betterlogi-permissions/src/macos.rs` | non-prompting permission reads + System-Settings deep links; `+[CBManager authorization]` via an `AnyClass` lookup |
 
 Every rule below binds all of them, whichever crate they live in.
 
@@ -58,21 +58,21 @@ Spawning the agent under its own macOS TCC identity (so its Accessibility /
 Input-Monitoring grants aren't attributed to the GUI, issue #214) lives in the
 external [`disclaim`](https://crates.io/crates/disclaim) crate — `posix_spawn` +
 the private `responsibility_spawnattrs_setdisclaim`, not ObjC.
-`openlogi-desktop/src/services/ipc/launch.rs`'s `spawn_agent` uses it; there is no
+`betterlogi-desktop/src/services/ipc/launch.rs`'s `spawn_agent` uses it; there is no
 in-tree FFI for it. Likewise, installed-application discovery and icon
 rendering for per-app profiles live in the external
 [`appcatalog`](https://crates.io/crates/appcatalog) crate (`NSWorkspace` +
-`NSBitmapImageRep` there, not here); `openlogi-desktop/src/platform/app_icon.rs`
+`NSBitmapImageRep` there, not here); `betterlogi-desktop/src/platform/app_icon.rs`
 only wraps its PNG bytes into a `gpui::Image`. The privacy-grant change
 notifications — the `com.apple.accessibility.api` distributed notification and
 tccd's `com.apple.tcc.access.changed` Darwin notification — are observed by the
 external [`axwatch`](https://crates.io/crates/axwatch) crate
-(`CFNotificationCenter` there, not here); `openlogi-hook`'s `grant::ProbeCue`
-and `openlogi-agent-core`'s grant watchers only consume its wakes.
+(`CFNotificationCenter` there, not here); `betterlogi-hook`'s `grant::ProbeCue`
+and `betterlogi-agent-core`'s grant watchers only consume its wakes.
 
-The rest of `openlogi-desktop/src/platform/` (`updater.rs`, on `gpui_updater`)
-carries **no** ObjC FFI — don't add any. Neither do `openlogi-core`'s
-`single_instance.rs` (fs4 lock) or `openlogi-agent`'s `autostart/macos.rs`
+The rest of `betterlogi-desktop/src/platform/` (`updater.rs`, on `gpui_updater`)
+carries **no** ObjC FFI — don't add any. Neither do `betterlogi-core`'s
+`single_instance.rs` (fs4 lock) or `betterlogi-agent`'s `autostart/macos.rs`
 (legacy-plist cleanup via `std::fs`).
 
 ## Ownership: `Retained<T>`, never raw `id`
@@ -116,7 +116,7 @@ every 2 s tray refresh under the old `cocoa`/`objc` 0.x path).
   They must stay bound — menu items reference their target *weakly*, the
   notification center does the same, and the power callback's `param` points
   into the connection's own `Arc`.
-- `openlogi-camera`'s frame delegate is deliberately the opposite: an
+- `betterlogi-camera`'s frame delegate is deliberately the opposite: an
   `NSObject` subclass with no `thread_kind`, because AVFoundation drives it on
   a background dispatch queue. Its one ivar is the owning session's
   `Arc<FrameSink>` (`Send + Sync`), so which session a frame belongs to is
@@ -132,10 +132,10 @@ is its own framework call, so "the TCC layer" is just this table:
 
 | Permission | Crate | Symbol | Read / prompt |
 |---|---|---|---|
-| Accessibility | `objc2-application-services` (`HIServices` + `AXUIElement`) | `AXIsProcessTrusted` / `AXIsProcessTrustedWithOptions` | both in `openlogi-hook` |
-| Input Monitoring / Post Event | `objc2-io-kit` (`hidsystem`) | `IOHIDCheckAccess` / `IOHIDRequestAccess` | read in `openlogi-permissions`, prompt in `openlogi-hid` |
-| Bluetooth | `objc2` class lookup (see below) | `+[CBManager authorization]` | `openlogi-permissions` |
-| Camera / microphone | `openlogi-camera` (`capture_macos.rs`) | `+[AVCaptureDevice authorizationStatusForMediaType:]` / `requestAccessForMediaType:` | `openlogi-camera` |
+| Accessibility | `objc2-application-services` (`HIServices` + `AXUIElement`) | `AXIsProcessTrusted` / `AXIsProcessTrustedWithOptions` | both in `betterlogi-hook` |
+| Input Monitoring / Post Event | `objc2-io-kit` (`hidsystem`) | `IOHIDCheckAccess` / `IOHIDRequestAccess` | read in `betterlogi-permissions`, prompt in `betterlogi-hid` |
+| Bluetooth | `objc2` class lookup (see below) | `+[CBManager authorization]` | `betterlogi-permissions` |
+| Camera / microphone | `betterlogi-camera` (`capture_macos.rs`) | `+[AVCaptureDevice authorizationStatusForMediaType:]` / `requestAccessForMediaType:` | `betterlogi-camera` |
 | Screen Recording (unused) | `objc2-core-graphics` | `CGPreflightScreenCaptureAccess` | — |
 | Full Disk Access (unused) | — | no API; only a probe of a protected path | — |
 
@@ -190,7 +190,7 @@ Rules:
 
 The bundles declare macOS 13.0 (`MACOSX_DEPLOYMENT_TARGET` in the release
 workflows, `LSMinimumSystemVersion` in the `Info.plist` templates under
-`crates/openlogi-desktop/bundle/`), but `objc2` generates every symbol a header
+`crates/betterlogi-desktop/bundle/`), but `objc2` generates every symbol a header
 declares regardless of its `API_AVAILABLE(macos(N))`, and Rust has no
 `@available` check. A *function* newer than the floor merely crashes
 when called on an older macOS; an extern *static* — `SMAppServiceErrorDomain`
@@ -212,26 +212,26 @@ Typed framework crates are the default; a hand-written `unsafe extern "C"` block
 is allowed **only** for symbols objc2 has no bindings for, and it stays next to
 its single user. The current set, all deliberate:
 
-- `openlogi-hook`: `CGEventCopyIOHIDEvent` / `IOHIDEventGetSenderID` —
+- `betterlogi-hook`: `CGEventCopyIOHIDEvent` / `IOHIDEventGetSenderID` —
   undocumented, no bindings anywhere.
-- `openlogi-hook/src/macos/secure_input.rs`: `IsSecureEventInputEnabled` —
+- `betterlogi-hook/src/macos/secure_input.rs`: `IsSecureEventInputEnabled` —
   Carbon HIToolbox, which `objc2-carbon` skips. It takes no arguments and has
   no precondition, so the block declares it `safe fn`.
-- `openlogi-agent/src/activity_macos.rs`: the `IOPMConnection` SPI
+- `betterlogi-agent/src/activity_macos.rs`: the `IOPMConnection` SPI
   (`IOPMConnectionCreate` / `SetNotification` / `SetDispatchQueue` /
   `AcknowledgeEvent` / `Release` / `GetSystemCapabilities`) — exported by IOKit
   since 10.6 and what `pmset` is built on, but declared only in Apple's
   open-source `IOKitUser/pwr_mgt.subproj/IOPMLibPrivate.h`, so `objc2-io-kit`
   cannot generate it. It is the only API that reports a DarkWake → FullWake
   transition, which is why the gate needs it (see `docs/DECISIONS.md`).
-- `openlogi-camera`: the AVFoundation / CoreMedia / CoreVideo / CoreFoundation
+- `betterlogi-camera`: the AVFoundation / CoreMedia / CoreVideo / CoreFoundation
   statics and functions its capture and enumeration paths need
   (`AVMediaTypeVideo`, `CMSampleBufferGetImageBuffer`, the `CVPixelBuffer`
   accessors, `CFRunLoopRunInMode`, `dispatch_queue_create`) — AVFoundation has no
   typed framework crate in the tree.
-- `openlogi-agent-core/src/watchers/camera.rs`: the CoreMediaIO property API —
+- `betterlogi-agent-core/src/watchers/camera.rs`: the CoreMediaIO property API —
   same reason.
-- `openlogi-inject`: the `dlopen`/`dlsym`-resolved private SPIs
+- `betterlogi-inject`: the `dlopen`/`dlsym`-resolved private SPIs
   (`CoreDockSendNotification`, the CGS symbolic-hotkey trio), and in
   `keyboard_layout.rs` Text Input Source Services, `LMGetKbdType`, and
   `UCKeyTranslate` — `objc2-carbon` skips HIToolbox and `objc2-core-services`
@@ -239,7 +239,7 @@ its single user. The current set, all deliberate:
   `unsigned long`: `usize`, not `u32`.
 - the `disclaim` crate: `responsibility_spawnattrs_setdisclaim` (private SPI).
 
-`openlogi-camera`'s `AVAuthorizationStatus` integers remain on the
+`betterlogi-camera`'s `AVAuthorizationStatus` integers remain on the
 migrate-when-touched list: they belong in `objc2-av-foundation`.
 Don't copy that pattern into new code.
 
@@ -295,7 +295,7 @@ under a `SAFETY` comment. Where it currently lives on macOS:
   queue, so it needs no `Activate` / `Cancel` pair: releasing it removes it.
 - `permissions/macos.rs` — the CoreBluetooth force-link and the `CBManager`
   class-method send. `IOHIDCheckAccess` needs none: `objc2-io-kit` exposes it as
-  a safe fn, in `openlogi-permissions` and `openlogi-hid` alike.
+  a safe fn, in `betterlogi-permissions` and `betterlogi-hid` alike.
 - `overlay/platform.rs` — `NSEvent::removeMonitor` and the
   `CGGetActiveDisplayList` / `CGDisplayBounds` pair.
 - `desktop/platform/os.rs` — reading AppKit's `NSAppearanceName` statics to set
@@ -309,7 +309,7 @@ under a `SAFETY` comment. Where it currently lives on macOS:
 
 ## CGEventTap stays on `core-graphics` — on purpose
 
-The event tap in `openlogi-hook/src/macos.rs` is **not** migrated.
+The event tap in `betterlogi-hook/src/macos.rs` is **not** migrated.
 `objc2-core-graphics` 0.3 *does* expose `CGEvent::tap_create`/`tap_enable` (it's
 not an availability gap), but the tap's Accessibility-revoke **freeze-hazard**
 state machine (the 500 ms run-loop slice + self-disable on its own thread) is
@@ -323,21 +323,21 @@ code on a bare thread does, because the framework still autoreleases internal
 temporaries. The call sites that keep an explicit
 `objc2::rc::autoreleasepool`, and the only ones that should:
 
-- `openlogi-hook`'s frontmost-application reads and activation observer — the
+- `betterlogi-hook`'s frontmost-application reads and activation observer — the
   watcher and notification callback may run on threads with no run loop, and
   `to_str` borrows its UTF-8 view from the pool (both the bundle id and the
   localized name). Registration and removal use the same boundary so AppKit's
   internal autoreleased temporaries are drained as well. The Secure Event
   Input app read names its app through the same conversion, on the
   secure-input watcher thread, under its own pool.
-- `openlogi-inject`'s `post_media_key` — the hook/gesture dispatch threads, where
+- `betterlogi-inject`'s `post_media_key` — the hook/gesture dispatch threads, where
   both the `NSEvent` creation and the `CGEvent` getter autorelease temporaries.
-- `openlogi-inject`'s `ax_browser_navigate` — the action worker, where `to_str`
+- `betterlogi-inject`'s `ax_browser_navigate` — the action worker, where `to_str`
   borrows the current frontmost app's bundle id while validating the captured
   Safari process.
-- `openlogi-inject`'s menu-shortcut press — the action worker, where the
+- `betterlogi-inject`'s menu-shortcut press — the action worker, where the
   `NSWorkspace` frontmost-app reads autorelease temporaries.
-- `openlogi-camera`'s device enumeration — every `AVCaptureDevice` string is
+- `betterlogi-camera`'s device enumeration — every `AVCaptureDevice` string is
   copied out before the pool drains, so no `Retained<T>` escapes it.
 
 ## Dependencies

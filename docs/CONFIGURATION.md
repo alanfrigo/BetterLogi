@@ -1,14 +1,14 @@
 # Configuration
 
-OpenLogi stores settings as plain TOML. The GUI and agent read the same file:
+BetterLogi stores settings as plain TOML. The GUI and agent read the same file:
 
-- macOS and Linux: `$XDG_CONFIG_HOME/openlogi/config.toml` (normally
-  `~/.config/openlogi/config.toml`)
-- Windows: `%USERPROFILE%\.config\openlogi\config.toml`
+- macOS and Linux: `$XDG_CONFIG_HOME/betterlogi/config.toml` (normally
+  `~/.config/betterlogi/config.toml`)
+- Windows: `%USERPROFILE%\.config\betterlogi\config.toml`
 
 The complete, tested example is [config.example.toml](config.example.toml).
 Copy only the sections you need and replace its example physical device keys
-with keys already written by OpenLogi for your devices.
+with keys already written by BetterLogi for your devices.
 
 ## Editing and recovery
 
@@ -24,7 +24,7 @@ the target so different links to the same file share the writer lock.
 The schema is strict: misspelled, obsolete, and out-of-range fields stop the
 config from loading instead of silently selecting a default or disappearing on
 the next save. The GUI then opens in read-only mode and shows the exact TOML
-error. Fix the file and relaunch OpenLogi.
+error. Fix the file and relaunch BetterLogi.
 
 If the file changes in an editor while the GUI is open, the next GUI save is
 refused rather than overwriting the external edit. Relaunch to load that
@@ -48,7 +48,7 @@ optional physical device key.
 `[app_settings]` contains application-wide preferences:
 
 - startup, update, menu-bar / tray, input-capture, and asset-download toggles
-- `asset_source`: `automatic`, `openlogi`, `cloudflare`, or `fastly`
+- `asset_source`: `automatic`, `betterlogi`, `cloudflare`, or `fastly`
 - `language`, `appearance`, `device_view_mode` (`grid`, `list`, or `carousel`),
   optional theme names, and optional UI radius
 - `smooth_scroll` toggles finite animation for traditional mouse-wheel input. With it
@@ -64,11 +64,11 @@ optional physical device key.
   under the pointer; the desktop uses the global bindings. Keyboard profiles
   continue to follow the focused application. Pointer targeting is supported
   on macOS, Windows, and X11; unsupported sessions such as Wayland use the
-  focused application, and so does a pointer over a surface OpenLogi cannot
+  focused application, and so does a pointer over a surface BetterLogi cannot
   identify, such as a system overlay, or a lookup that fails. An unidentified
   surface uses the focused application's profile rather than the desktop's;
   with no focused application there is no such profile and the global bindings
-  apply, as in focused mode. OpenLogi never activates a background window to
+  apply, as in focused mode. BetterLogi never activates a background window to
   send a shortcut: over an identified window or the desktop, mouse
   bindings that produce keystrokes or run workflows are skipped unless the
   hovered window is focused. Global actions such as desktop switching can run
@@ -135,8 +135,8 @@ Common device fields are:
   thumb contact as well as from deliberate ones.
   Keyboard keys are named by their HID++ `0x1b04` control: a catalog name such
   as `KeyScreenCapture`, `KeyCalculator` or `KeyLock`, or `control:0x<cid>` for
-  any control `openlogi diag controls` reports as divertable. A bound key is
-  diverted to OpenLogi while the agent runs; an unbound key keeps its firmware
+  any control `betterlogi diag controls` reports as divertable. A bound key is
+  diverted to BetterLogi while the agent runs; an unbound key keeps its firmware
   function, so binding `None` is the same as removing the entry. Naming one
   control under both spellings in the same table is an error, not a merge
 - `per_app_bindings`: sparse action overlays keyed by macOS bundle id (or the
@@ -161,7 +161,7 @@ Common device fields are:
   its buttons or by another program also replaces the saved value while the
   agent runs, so a reconnect writes the new value back, as in Logi Options+.
   The agent publishes the change to clients and keeps it until a save or a
-  write from OpenLogi sets that control; a write that fails leaves it, unless
+  write from BetterLogi sets that control; a write that fails leaves it, unless
   a reload during the write replaced it. The desktop app saves the change
   as the light's setting. While one of its own
   writes to that light is in flight, it waits for the write to settle and
@@ -274,25 +274,23 @@ host_switch_targets = ["unit:22222222"]
 ```
 
 Use the actual `unit:` or `serial:` keys from your config, not the example IDs.
-OpenLogi must be running on the host the keyboard is leaving, and the keyboard
-must expose native HID++ `ChangeHost` v2 departure notifications or reportable
-host controls. MX Keys Mini over Bolt uses native departure notifications;
-its Easy-Switch keys remain native. For older keyboards, inspect
-`openlogi diag controls --device "MX Keys"`: controls `0x00d1`–`0x00d3`
-need `divertable` or `analytics-events` support.
+BetterLogi must be running on the computer the keyboard is leaving: that
+computer moves the mice. The keyboard needs HID++ `ChangeHost` (`0x1814`).
+Keyboards that announce a host change (`ChangeHost` v2 or later, such as MX
+Keys Mini and MX Keys S) keep their Easy-Switch keys; the mice follow the
+announcement. Older keyboards need their Easy-Switch keys (`0x00d1`–`0x00d3`
+in `betterlogi diag controls --device "MX Keys"`) to be `divertable` or to
+support `analytics-events`.
 
-The pressed slot number is used on every linked device: pair keyboard and mouse
-slot 1 to the same computer, slot 2 to the same second computer, and so on.
-OpenLogi does not match computers by host name. Install and configure OpenLogi
-on each computer for switches initiated there; switching back does not run code
-on the computer that was left behind. Offline mice cannot be commanded.
+Each mouse moves to its slot whose `0x1815` host name matches the keyboard's new
+slot, else to the same slot number, and never to a slot the keyboard reports as
+empty. Pair keyboard and mouse slot 1 to the same computer, slot 2 to the same
+second computer, and so on. A mouse that does not answer at once (asleep, or the
+receiver busy with the keyboard's departure) is retried for about 8 seconds.
 
 After manual file edits, restart the agent. Its log reports
-`native host switch link active` or `host switch link active` when monitoring is armed. Native departure
-monitoring switches only linked targets: it never restores controls or sends
-commands to the keyboard after it leaves. Arming alone does not prove a physical
-host transition; test an Easy-Switch press and verify the mouse on the destination
-computer.
+`host switch link active` when monitoring is armed, and
+`linked device followed the keyboard` for each mouse that moved.
 
 ## Actions
 
@@ -314,7 +312,7 @@ with adjustable DPI, `CycleDpiPresets` keeps cycling the DPI presets.
 
 A mouse with a DPI LED (HID++ `0x1300`), such as the MX Ergo, shows the mode
 on that LED, as in Logi Options+. The LED lights when precision mode starts
-and goes dark when it ends. OpenLogi takes control of the LED from the
+and goes dark when it ends. BetterLogi takes control of the LED from the
 firmware the first time precision mode starts, and keeps it. A mouse that
 never uses precision mode keeps the LED behavior of its firmware.
 
@@ -387,12 +385,12 @@ turning the wheel fires `click`; a press that scrolled fires nothing else. It is
 off unless you bind it.
 
 The held scroll needs raw-wheel reporting on that button, which only some
-firmware offers, and the mouse hook, so OpenLogi can post the scroll (on macOS,
-the Accessibility permission). Without either, OpenLogi captures the button for
+firmware offers, and the mouse hook, so BetterLogi can post the scroll (on macOS,
+the Accessibility permission). Without either, BetterLogi captures the button for
 `click` alone, as it does a long-press pair, and the wheel scrolls as usual.
 With mouse capture turned off the button keeps its native function, like every
 other mouse binding. While the button is diverted the wheel scrolls only through
-OpenLogi, so OpenLogi hands both back to the firmware when the binding changes,
+BetterLogi, so BetterLogi hands both back to the firmware when the binding changes,
 the device disconnects, or the agent exits. It never sets the firmware's
 persistent flag, so the diversion does not outlive a device power cycle.
 

@@ -7,7 +7,7 @@ name: Nix CI
 # a full Nix rebuild on every crate Cargo.toml bump.
 #
 # The Flake lives in packaging/. The root flake.nix is a deprecated alias for
-# existing `github:AprilNEA/OpenLogi` inputs; nix fmt only uses the Flake of
+# existing `github:alanfrigo/BetterLogi` inputs; nix fmt only uses the Flake of
 # the working directory, so formatting runs from packaging/.
 #
 # packaging/flake.lock pins nixpkgs exactly; update-flake-lock.yml advances it in

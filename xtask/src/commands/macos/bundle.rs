@@ -1,4 +1,4 @@
-//! Assembling `OpenLogi.app`: the order the pieces go in, and why.
+//! Assembling `BetterLogi.app`: the order the pieces go in, and why.
 
 mod embed;
 pub(crate) mod identity;
@@ -56,7 +56,7 @@ impl DistributionTarget {
     }
 }
 
-/// Build `OpenLogi.app` wearing `channel`'s identity, signing it with whatever
+/// Build `BetterLogi.app` wearing `channel`'s identity, signing it with whatever
 /// local identity is available (dev) or leaving it unsigned (production).
 pub(crate) fn run(channel: Channel) -> Result<()> {
     build_bundle(
@@ -109,14 +109,14 @@ fn build_bundle(
     println!("==> app icon");
     AppBundle.compile()?;
 
-    if env::var("OPENLOGI_BUNDLE_ASSETS").as_deref() == Ok("1") {
+    if env::var("BETTERLOGI_BUNDLE_ASSETS").as_deref() == Ok("1") {
         println!("==> device assets: bundling (offline build)");
-        cmd!(sh, "cargo run -p openlogi --release -- assets sync")
+        cmd!(sh, "cargo run -p betterlogi --release -- assets sync")
             .envs(xcode_env.iter().map(|(key, value)| (key, value)))
             .run()?;
     } else {
         println!("==> device assets: on-demand (not bundled; fetched at first launch)");
-        let assets = root.join("crates/openlogi-desktop/assets");
+        let assets = root.join("crates/betterlogi-desktop/assets");
         if assets.exists() {
             fs_err::remove_dir_all(&assets)
                 .with_context(|| format!("could not remove {}", assets.display()))?;
@@ -138,7 +138,7 @@ fn build_bundle(
         .flat_map(|triple| ["--target", triple])
         .collect();
     {
-        let gui_dir = root.join("crates/openlogi-desktop");
+        let gui_dir = root.join("crates/betterlogi-desktop");
         let _gui = sh.push_dir(gui_dir);
         cmd!(sh, "cargo bundle --release --format osx {target_args...}")
             .env("CARGO_BUNDLE_SKIP_BUILD", "1")
@@ -146,9 +146,9 @@ fn build_bundle(
             .run()?;
     }
 
-    let built_app = release_dir.join("bundle/osx/OpenLogi.app");
+    let built_app = release_dir.join("bundle/osx/BetterLogi.app");
     ensure_dir(&built_app)?;
-    let app = root.join("target/release/bundle/osx/OpenLogi.app");
+    let app = root.join("target/release/bundle/osx/BetterLogi.app");
     move_to_canonical_path(&built_app, &app)?;
     AppBundle.install(&app)?;
     // cargo-bundle writes the build's UTC timestamp as `CFBundleVersion`. The
@@ -235,13 +235,13 @@ mod tests {
     #[test]
     fn native_bundle_already_has_the_canonical_path() {
         let root = tempfile::tempdir().unwrap();
-        let app = release_dir(root.path(), None).join("bundle/osx/OpenLogi.app");
+        let app = release_dir(root.path(), None).join("bundle/osx/BetterLogi.app");
         fs_err::create_dir_all(&app).unwrap();
         fs_err::write(app.join("binary"), []).unwrap();
 
         assert_eq!(
             app,
-            root.path().join("target/release/bundle/osx/OpenLogi.app")
+            root.path().join("target/release/bundle/osx/BetterLogi.app")
         );
         move_to_canonical_path(&app, &app).unwrap();
         assert!(app.join("binary").is_file());
@@ -251,8 +251,8 @@ mod tests {
     fn cross_compiled_bundle_replaces_the_canonical_app() {
         let root = tempfile::tempdir().unwrap();
         let source =
-            release_dir(root.path(), Some("x86_64-apple-darwin")).join("bundle/osx/OpenLogi.app");
-        let destination = root.path().join("target/release/bundle/osx/OpenLogi.app");
+            release_dir(root.path(), Some("x86_64-apple-darwin")).join("bundle/osx/BetterLogi.app");
+        let destination = root.path().join("target/release/bundle/osx/BetterLogi.app");
         fs_err::create_dir_all(&source).unwrap();
         fs_err::write(source.join("new"), []).unwrap();
         fs_err::create_dir_all(&destination).unwrap();

@@ -16,24 +16,24 @@ use crate::support::manifest::workspace_package;
 /// cross-compile.
 ///
 /// `clippy --target` is check-only (no linker needed), but a C-compiling build
-/// dependency does need a cross C toolchain: `openlogi-{assets,cli}` and the
-/// root `openlogi` pull ureq → ring, whose `curve25519.c` cannot cross-compile
+/// dependency does need a cross C toolchain: `betterlogi-{assets,cli}` and the
+/// root `betterlogi` pull ureq → ring, whose `curve25519.c` cannot cross-compile
 /// from macOS without mingw. They have no Windows-specific code, so this is the
 /// ring-free agent/leaf subset; CI covers the rest natively. The GUI crates are
 /// out because GPUI has no Windows backend.
 ///
 /// A crate missing here is a crate whose Windows paths nothing checks until CI
-/// — which is how three `chunks_exact` sites in `openlogi-camera` survived a
+/// — which is how three `chunks_exact` sites in `betterlogi-camera` survived a
 /// whole lint sweep.
 const WINDOWS_LINT_CRATES: [&str; 8] = [
-    "openlogi-core",
-    "openlogi-hidpp",
-    "openlogi-hid",
-    "openlogi-hook",
-    "openlogi-inject",
-    "openlogi-camera",
-    "openlogi-agent",
-    "openlogi-agent-core",
+    "betterlogi-core",
+    "betterlogi-hidpp",
+    "betterlogi-hid",
+    "betterlogi-hook",
+    "betterlogi-inject",
+    "betterlogi-camera",
+    "betterlogi-agent",
+    "betterlogi-agent-core",
 ];
 
 /// The crates that must keep compiling with no OS underneath them.
@@ -43,17 +43,17 @@ const WINDOWS_LINT_CRATES: [&str; 8] = [
 /// portable by default. Adding a name here is the claim; this job is what makes
 /// it a fact.
 ///
-/// `openlogi-core` qualifies only with its `fs` feature off — that feature is
+/// `betterlogi-core` qualifies only with its `fs` feature off — that feature is
 /// the config file, and a config file needs a filesystem. Hence
 /// `--no-default-features`, which is why this job checks it in its own pass.
 const WASM_PORTABLE_CRATES: [&str; 3] = [
-    "openlogi-device-registry",
-    "openlogi-hidpp",
-    "openlogi-device",
+    "betterlogi-device-registry",
+    "betterlogi-hidpp",
+    "betterlogi-device",
 ];
 
 /// The crates that are portable once their host-facing feature is off.
-const WASM_PORTABLE_NO_DEFAULT_CRATES: [&str; 1] = ["openlogi-core"];
+const WASM_PORTABLE_NO_DEFAULT_CRATES: [&str; 1] = ["betterlogi-core"];
 
 /// Every crate the wasm job checks, however it checks it.
 #[cfg(test)]
@@ -67,10 +67,10 @@ pub(super) fn wasm_portable_crates() -> impl Iterator<Item = &'static str> {
 /// graphics toolchain into the job. Excluding by name rather than listing the
 /// covered crates keeps a new crate documented by default.
 const RUSTDOC_EXCLUDES: [&str; 4] = [
-    "openlogi-ui",
-    "openlogi-desktop",
-    "openlogi-overlay",
-    "openlogi-agent",
+    "betterlogi-ui",
+    "betterlogi-desktop",
+    "betterlogi-overlay",
+    "betterlogi-agent",
 ];
 
 const CLIPPY_ARGS: [&str; 6] = [
@@ -153,7 +153,7 @@ pub(super) fn plan(job: Job, sh: &Shell, host: Host) -> Result<Plan> {
         Job::Rustdoc => Ok(rustdoc(job)),
         Job::TestsLinux | Job::TestsWindows => Ok(Plan::run(
             job,
-            [Step::new("cargo").args(["test", "--workspace", "--exclude", "openlogi-desktop"])],
+            [Step::new("cargo").args(["test", "--workspace", "--exclude", "betterlogi-desktop"])],
         )),
         Job::TestsMacos => Ok(tests_macos(job)),
         Job::CargoDeny => Ok(cargo_deny(job)),
@@ -163,13 +163,13 @@ pub(super) fn plan(job: Job, sh: &Shell, host: Host) -> Result<Plan> {
         Job::I18n => Ok(Plan::run(
             job,
             [
-                Step::new("cargo").args(["test", "-p", "openlogi-ui", "locale"]),
-                Step::new("cargo").args(["test", "-p", "openlogi-desktop", "i18n"]),
+                Step::new("cargo").args(["test", "-p", "betterlogi-ui", "locale"]),
+                Step::new("cargo").args(["test", "-p", "betterlogi-desktop", "i18n"]),
             ],
         )),
         Job::Wire => Ok(Plan::run(
             job,
-            [Step::new("cargo").args(["test", "-p", "openlogi-ipc", "--test", "wire_format"])],
+            [Step::new("cargo").args(["test", "-p", "betterlogi-ipc", "--test", "wire_format"])],
         )),
     }
 }
@@ -332,7 +332,7 @@ fn cargo_deny(job: Job) -> Plan {
         ".cargo/deny.toml",
         "--all-features",
         "--manifest-path",
-        "crates/openlogi/Cargo.toml",
+        "crates/betterlogi/Cargo.toml",
         "check",
     ];
 

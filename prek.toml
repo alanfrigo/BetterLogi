@@ -65,7 +65,7 @@ stages = ["pre-push"]
 [[repos.hooks]]
 id = "cargo-rustdoc"
 name = "cargo doc"
-entry = "sh -c 'RUSTDOCFLAGS=\"-D warnings\" cargo doc --workspace --no-deps --document-private-items --exclude openlogi-ui --exclude openlogi-desktop --exclude openlogi-overlay --exclude openlogi-agent'"
+entry = "sh -c 'RUSTDOCFLAGS=\"-D warnings\" cargo doc --workspace --no-deps --document-private-items --exclude betterlogi-ui --exclude betterlogi-desktop --exclude betterlogi-overlay --exclude betterlogi-agent'"
 language = "system"
 types = ["rust"]
 pass_filenames = false

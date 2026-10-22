@@ -23,7 +23,7 @@ whose invocation does not depend on the host, and `every_ci_yml_job_name_resolve
 fails on a job name the runner cannot even name — but neither can check this
 file, so it is on you.
 
-`devenv tasks run openlogi:check` is the **full tier** of the host-OS pre-push
+`devenv tasks run betterlogi:check` is the **full tier** of the host-OS pre-push
 gate (fmt, clippy, tests, rustdoc). The local gate below defines when a package-local
 diff may check its complete reverse-dependency closure instead. Neither tier is the
 pipeline. macOS-green clippy does not compile linux cfg; it does not run typos,
@@ -46,7 +46,7 @@ For a Rust-bearing diff, derive the **affected package set** from the final tree
 every changed workspace package plus every workspace package that depends on one of
 them, transitively. Run `cargo tree --workspace --target all --invert <changed>` for
 each changed package and take the union of workspace packages in the output. Count
-that set, not edited crate directories — changing only `openlogi-core` still affects
+that set, not edited crate directories — changing only `betterlogi-core` still affects
 much of the application. When the set is uncertain, use the full tier.
 
 **Affected-package tier** — allowed only when all of these are true:
@@ -81,9 +81,9 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps \
-  --document-private-items --exclude openlogi-ui --exclude openlogi-desktop \
-  --exclude openlogi-overlay --exclude openlogi-agent
-# or: devenv tasks run openlogi:check
+  --document-private-items --exclude betterlogi-ui --exclude betterlogi-desktop \
+  --exclude betterlogi-overlay --exclude betterlogi-agent
+# or: devenv tasks run betterlogi:check
 # every CI job this host can reproduce: cargo xtask ci
 ```
 
@@ -118,11 +118,11 @@ backstop, not a substitute for running the gate yourself after a rebase.
    `.agents/rules/cross-platform.md`.
 5. If wire types changed: `PROTOCOL_VERSION` above the latest release's (moved once
    per release, not once per change) and
-   `cargo test -p openlogi-ipc --test wire_format` green — see
-   `crates/openlogi-ipc/AGENTS.md`.
-6. If locales changed: every `crates/openlogi-ui/locales/*.toml` carries the same keys
-   as `en.toml` (new keys at the same position); run `cargo test -p openlogi-ui locale`
-   for catalog parity and `cargo test -p openlogi-desktop i18n` for catalog wiring and
+   `cargo test -p betterlogi-ipc --test wire_format` green — see
+   `crates/betterlogi-ipc/AGENTS.md`.
+6. If locales changed: every `crates/betterlogi-ui/locales/*.toml` carries the same keys
+   as `en.toml` (new keys at the same position); run `cargo test -p betterlogi-ui locale`
+   for catalog parity and `cargo test -p betterlogi-desktop i18n` for catalog wiring and
    desktop resolution — see `.agents/rules/i18n.md`.
 7. Only then `git push` / force-push to the PR branch.
 
@@ -134,7 +134,7 @@ cargo xtask ci --list             # job → command table
 cargo xtask ci rustfmt docs       # named jobs (CI `name:` or job id)
 cargo xtask ci --dry-run          # print each job's commands, run nothing
 direnv exec . cargo xtask ci      # when cargo is only inside devenv
-devenv tasks run openlogi:ci      # same as the command
+devenv tasks run betterlogi:ci      # same as the command
 ```
 
 The runner sets CI's semantic compiler env (`RUSTFLAGS=-D warnings`). CI also
@@ -153,14 +153,14 @@ warning that host clippy `-D warnings` does not surface still fails CI.
 | `shell` | `git ls-files -z \| xargs -0 shfmt -f` piped into `xargs shellcheck` and `xargs shfmt -d` | any (needs `shellcheck` + `shfmt`; both are in the devenv shell) |
 | `clippy` | `cargo clippy --workspace --all-targets -- -D warnings` | **Linux** is the CI job. Host clippy on macOS/Windows compiles a different `cfg` |
 | `MSRV (cargo check, <os>)` | `RUSTUP_TOOLCHAIN=<rust-version> cargo check --workspace --all-targets` | macOS and Linux. `<rust-version>` is `rust-version` in the root `Cargo.toml` |
-| `rustdoc (non-GUI crates)` | `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --document-private-items --exclude openlogi-ui --exclude openlogi-desktop --exclude openlogi-overlay --exclude openlogi-agent` | any |
-| `tests (linux)` | `cargo test --workspace --exclude openlogi-desktop` | Linux |
+| `rustdoc (non-GUI crates)` | `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --document-private-items --exclude betterlogi-ui --exclude betterlogi-desktop --exclude betterlogi-overlay --exclude betterlogi-agent` | any |
+| `tests (linux)` | `cargo test --workspace --exclude betterlogi-desktop` | Linux |
 | `tests (macos, <arch>)` | `cargo test --workspace --all-targets` | macOS. CI matrix is arm64 (`macos-latest`) and x86_64 (`macos-15-intel`) |
-| `tests (windows)` | `cargo test --workspace --exclude openlogi-desktop` | **Windows** only — the one place the `cfg(windows)` tests execute; nothing reproduces it elsewhere |
-| `cargo-deny` | `cargo deny --config .cargo/deny.toml --all-features --manifest-path crates/openlogi/Cargo.toml check` | any (needs `cargo-deny`; `nix run nixpkgs#cargo-deny -- …` also works) |
-| `clippy (windows)` | `cargo clippy --workspace --all-targets -- -D warnings` | **Windows**. Elsewhere: `devenv tasks run openlogi:check-windows` (ring-free subset, not the full workspace) |
+| `tests (windows)` | `cargo test --workspace --exclude betterlogi-desktop` | **Windows** only — the one place the `cfg(windows)` tests execute; nothing reproduces it elsewhere |
+| `cargo-deny` | `cargo deny --config .cargo/deny.toml --all-features --manifest-path crates/betterlogi/Cargo.toml check` | any (needs `cargo-deny`; `nix run nixpkgs#cargo-deny -- …` also works) |
+| `clippy (windows)` | `cargo clippy --workspace --all-targets -- -D warnings` | **Windows**. Elsewhere: `devenv tasks run betterlogi:check-windows` (ring-free subset, not the full workspace) |
 | `clippy (macos)` | `cargo clippy --workspace --all-targets -- -D warnings` | **macOS** only. CI runs it on `macos-latest` (arm64); it is the one job that lints the macOS `cfg` (`tests (macos)` compiles it, without clippy), and no other host can reproduce it |
-| `wasm (portable crates)` | `cargo check -p openlogi-hidpp -p openlogi-device --target wasm32-unknown-unknown` then `cargo check -p openlogi-core --no-default-features --target wasm32-unknown-unknown` | any (needs the `wasm32-unknown-unknown` std; devenv installs it) |
+| `wasm (portable crates)` | `cargo check -p betterlogi-hidpp -p betterlogi-device --target wasm32-unknown-unknown` then `cargo check -p betterlogi-core --no-default-features --target wasm32-unknown-unknown` | any (needs the `wasm32-unknown-unknown` std; devenv installs it) |
 
 CI always sets `CARGO_TERM_COLOR=always`, `CARGO_INCREMENTAL=0`, and
 `RUSTFLAGS=-D warnings`. Compilation jobs also set `RUSTC_WRAPPER=sccache`;
@@ -173,7 +173,7 @@ The `fmt` job selects all workspace test jobs with the path filter in `ci.yml`. 
 
 ### ast-grep rules
 
-Load the [ast-grep skill](../skills/ast-grep/SKILL.md) for structural searches, rewrites, and rule authoring. The following constraints govern OpenLogi guards:
+Load the [ast-grep skill](../skills/ast-grep/SKILL.md) for structural searches, rewrites, and rule authoring. The following constraints govern BetterLogi guards:
 
 - Store each rule in the owning crate's `.ast-grep/rules/`, or `xtask/.ast-grep/rules/` for an xtask owner. A workspace-wide policy that no crate owns, such as the lint table in the root `Cargo.toml`, goes in the root `.ast-grep/rules/`. Cross-crate guards live with the owner, even when they inspect other crates.
 - Register each rule directory in the root `sgconfig.yml`. Keep one project config. Rule `files` and `ignores` selectors are relative to that project root, not the YAML file.
@@ -195,17 +195,17 @@ Host clippy on macOS is not CI's `clippy` job. For linux cfg outside camera:
 
 ```sh
 cargo clippy --target aarch64-unknown-linux-musl \
-  -p openlogi-hook -p openlogi-inject -p openlogi-hid -p openlogi-hidpp \
-  -p openlogi-core -p openlogi-agent -p openlogi-agent-core -p openlogi-ipc \
-  -p openlogi-permissions --all-targets -- -D warnings
+  -p betterlogi-hook -p betterlogi-inject -p betterlogi-hid -p betterlogi-hidpp \
+  -p betterlogi-core -p betterlogi-agent -p betterlogi-agent-core -p betterlogi-ipc \
+  -p betterlogi-permissions --all-targets -- -D warnings
 ```
 
-`openlogi-camera`'s Linux backend needs kernel headers and does not
+`betterlogi-camera`'s Linux backend needs kernel headers and does not
 cross-compile from macOS. Details: `.agents/rules/cross-platform.md`.
 
-Linux CI tests **exclude** `openlogi-desktop`, but still run `openlogi-ui`'s
+Linux CI tests **exclude** `betterlogi-desktop`, but still run `betterlogi-ui`'s
 portable locale-parity test. The desktop end-to-end key-resolution tests run
-only on macOS CI (`cargo test -p openlogi-desktop i18n`).
+only on macOS CI (`cargo test -p betterlogi-desktop i18n`).
 
 ## If you changed X, run Y
 
@@ -216,12 +216,12 @@ only on macOS CI (`cargo test -p openlogi-desktop i18n`).
 | crate publish flags, workspace path dependencies, `release-plz.toml` | `publish-closure` |
 | any `*.sh`, any file with a shell shebang, `.editorconfig` | `shell` (the prek hooks run the same two tools at commit) |
 | `#[cfg(target_os = …)]`, hook/inject/hid/camera platform files | `clippy-windows` proxy + the linux-musl recipe; say so if you cannot |
-| `crates/openlogi-hidpp/**`, `crates/openlogi-device/**`, `crates/openlogi-core/**`, or any dependency they gain | `wasm` — those crates must keep building with no OS under them |
+| `crates/betterlogi-hidpp/**`, `crates/betterlogi-device/**`, `crates/betterlogi-core/**`, or any dependency they gain | `wasm` — those crates must keep building with no OS under them |
 | `Cargo.lock` / `.cargo/deny.toml` / new deps | `cargo-deny` |
 | `rust-version` or a newly stabilized API | `MSRV` |
 | rustdoc / moved trait impls / hidpp derive | `rustdoc` |
-| `crates/openlogi-ipc/**` or wire types | `cargo test -p openlogi-ipc --test wire_format` |
-| `crates/openlogi-ui/locales/**` | `cargo test -p openlogi-ui locale`; also `cargo test -p openlogi-desktop i18n` when binary wiring or desktop resolution changed |
+| `crates/betterlogi-ipc/**` or wire types | `cargo test -p betterlogi-ipc --test wire_format` |
+| `crates/betterlogi-ui/locales/**` | `cargo test -p betterlogi-ui locale`; also `cargo test -p betterlogi-desktop i18n` when binary wiring or desktop resolution changed |
 | `devenv.nix` / `.envrc` / `devenv.lock` | devenv CI: `(cd packaging && nix fmt -- --check ../devenv.nix)` and `devenv --no-tui shell -- true` |
 | `flake.nix` / `packaging/flake.*` / `packaging/linux/**` | Nix CI: `(cd packaging && nix fmt -- --check flake.nix linux/package.nix linux/nixos-module.nix ../flake.nix ../devenv.nix)`, `nix flake check ./packaging --all-systems --no-build --show-trace`, and, for the deprecated root alias, `nix flake check --all-systems --no-build --no-write-lock-file` |
 | `xtask/src/commands/lint/**` | `cargo test -p xtask lint::` and `cargo xtask lint sweep-allows`; the PR runs Stale allows on all three hosts |
@@ -233,7 +233,7 @@ Not part of `ci.yml`, not in the default run:
 
 - **Nix CI** (path-filtered): evaluate + format, then `nix build` the package on
   x86_64-linux and aarch64-linux. Local: the `nix fmt` / `nix flake check`
-  commands above; a full `nix build ./packaging#openlogi` matches the build job
+  commands above; a full `nix build ./packaging#betterlogi` matches the build job
   on Linux. `nix fmt` takes no Flake argument, so it runs from `packaging/`.
 - **devenv CI** (path-filtered): format `devenv.nix` and `devenv --no-tui shell -- true`.
 - **Build**: unsigned installers on every PR. Run the matching `cargo xtask`
@@ -242,7 +242,7 @@ Not part of `ci.yml`, not in the default run:
   of that matrix, so a PR touching `packaging/linux/flatpak/**` gets no feedback
   until someone labels it. Reproduce locally with
   `flatpak-builder --user --disable-rofiles-fuse --force-clean --repo=repo
-  --default-branch=stable build packaging/linux/flatpak/org.openlogi.OpenLogi.yml`,
+  --default-branch=stable build packaging/linux/flatpak/org.betterlogi.BetterLogi.yml`,
   and keep the build tree off `/tmp` if it is a tmpfs: the workspace needs well
   over 10 GB to compile inside the sandbox.
 - **Stale allows** (weekly, and path-filtered to the sweep itself): removes each
@@ -260,5 +260,5 @@ Not part of `ci.yml`, not in the default run:
    host skip — do not reach for `cfg!(target_os = …)` in a job's steps.
    If the new job's command is the same everywhere, add it to
    `ci_yml_runs_what_this_runner_runs` so a typo in either copy fails a test.
-2. If it belongs in the host-OS pre-push gate, also update `openlogi:check` in
+2. If it belongs in the host-OS pre-push gate, also update `betterlogi:check` in
    `devenv.nix` and the Local gate above.

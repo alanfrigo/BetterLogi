@@ -5,11 +5,14 @@ use super::stamp_launch_services_keys;
 #[test]
 fn launch_services_keys_match_what_cargo_bundle_generated() {
     let dir = tempfile::tempdir().unwrap();
-    let app = dir.path().join("OpenLogi.app");
+    let app = dir.path().join("BetterLogi.app");
     let info_plist = app.join("Contents/Info.plist");
     fs_err::create_dir_all(info_plist.parent().unwrap()).unwrap();
     let mut existing = Dictionary::new();
-    existing.insert("CFBundleIdentifier".into(), "org.openlogi.openlogi".into());
+    existing.insert(
+        "CFBundleIdentifier".into(),
+        "org.betterlogi.betterlogi".into(),
+    );
     // A stale URL type from an earlier stamp is replaced, not appended to.
     let mut stale = Dictionary::new();
     stale.insert(
@@ -30,7 +33,7 @@ fn launch_services_keys_match_what_cargo_bundle_generated() {
     let dict = plist.as_dictionary().unwrap();
     assert_eq!(
         dict.get("CFBundleIdentifier").and_then(Value::as_string),
-        Some("org.openlogi.openlogi")
+        Some("org.betterlogi.betterlogi")
     );
     assert_eq!(
         dict.get("LSMinimumSystemVersion")
@@ -45,7 +48,7 @@ fn launch_services_keys_match_what_cargo_bundle_generated() {
     let url_type = url_types[0].as_dictionary().unwrap();
     assert_eq!(
         url_type.get("CFBundleURLName").and_then(Value::as_string),
-        Some("OpenLogi")
+        Some("BetterLogi")
     );
     assert_eq!(
         url_type.get("CFBundleTypeRole").and_then(Value::as_string),
@@ -53,6 +56,6 @@ fn launch_services_keys_match_what_cargo_bundle_generated() {
     );
     assert_eq!(
         url_type.get("CFBundleURLSchemes"),
-        Some(&Value::Array(vec!["openlogi".into()]))
+        Some(&Value::Array(vec!["betterlogi".into()]))
     );
 }

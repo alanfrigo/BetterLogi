@@ -1,0 +1,31 @@
+[package]
+name = "betterlogi-agent-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Headless orchestration shared by the BetterLogi background agent: hook runtime, HID++ writes, DPI cycle, Actions Ring session state."
+# Links path-only siblings and is bundled inside the .app via betterlogi-agent.
+publish = false
+
+[dependencies]
+axwatch = { workspace = true }
+betterlogi-core = { path = "../betterlogi-core", features = ["worker"] }
+betterlogi-inject = { path = "../betterlogi-inject" }
+betterlogi-hid = { path = "../betterlogi-hid" }
+betterlogi-hook = { path = "../betterlogi-hook" }
+betterlogi-ipc = { path = "../betterlogi-ipc" }
+futures-lite = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# Only to advance virtual time in the DeviceOp/timed timeout test without a
+# real multi-second sleep.
+betterlogi-fixture = { workspace = true, features = ["fs"] }
+tokio = { workspace = true, features = ["test-util"] }

@@ -10,13 +10,13 @@ REPO_ROOT=$(CDPATH='' cd "${SCRIPT_DIR}/../../.." && pwd -P)
 INSTALLER=${REPO_ROOT}/packaging/linux/install.sh
 ORIGINAL_PATH=$PATH
 REAL_SHA256SUM=$(command -v sha256sum)
-WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/openlogi-install-smoke.XXXXXXXXXX")
+WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/betterlogi-install-smoke.XXXXXXXXXX")
 MOCK_BIN=${WORK_DIR}/bin
 MOCK_LOG=${WORK_DIR}/commands.log
 MOCK_CURL_LOG=${WORK_DIR}/curl.log
 MOCK_MINISIGN_LOG=${WORK_DIR}/minisign.log
 MOCK_PACKAGE_PATH=${WORK_DIR}/package-path
-MOCK_SERVICE_CAPTURE=${WORK_DIR}/openlogi-agent.service
+MOCK_SERVICE_CAPTURE=${WORK_DIR}/betterlogi-agent.service
 OUTPUT=${WORK_DIR}/output
 
 cleanup() {
@@ -99,9 +99,9 @@ done
 }
 
 case "$url" in
-  https://github.com/AprilNEA/OpenLogi/releases/latest)
+  https://github.com/alanfrigo/BetterLogi/releases/latest)
     [ "$write_out" = '%{url_effective}' ] || exit 1
-    printf 'https://github.com/AprilNEA/OpenLogi/releases/tag/%s' "$MOCK_LATEST_TAG"
+    printf 'https://github.com/alanfrigo/BetterLogi/releases/tag/%s' "$MOCK_LATEST_TAG"
     ;;
   */SHA256SUMS)
     package_path=$(cat "$MOCK_PACKAGE_PATH")
@@ -114,10 +114,10 @@ case "$url" in
     fi
     printf '%s  %s\n' "$hash" "$package_name" >"$output"
     ;;
-  */openlogi-v*-linux-*.minisig)
+  */betterlogi-v*-linux-*.minisig)
     printf '%s\n' fixture-signature >"$output"
     ;;
-  */openlogi-v*-linux-*.deb | */openlogi-v*-linux-*.rpm | */openlogi-v*-linux-*.pkg.tar.zst)
+  */betterlogi-v*-linux-*.deb | */betterlogi-v*-linux-*.rpm | */betterlogi-v*-linux-*.pkg.tar.zst)
     printf '%s\n' fixture-package >"$output"
     printf '%s\n' "$output" >"$MOCK_PACKAGE_PATH"
     ;;
@@ -166,7 +166,7 @@ for argument do
   previous=$last
   last=$argument
 done
-if [ "$last" = /usr/lib/systemd/user/openlogi-agent.service ]; then
+if [ "$last" = /usr/lib/systemd/user/betterlogi-agent.service ]; then
   cp "$previous" "$MOCK_SERVICE_CAPTURE"
 fi
 EOF
@@ -265,14 +265,14 @@ export MOCK_ARCH
 dash "$INSTALLER" >"$OUTPUT"
 assert_contains "$MOCK_CURL_LOG" '--proto =https --proto-redir =https --tlsv1.2 --fail --location'
 assert_contains "$MOCK_CURL_LOG" '/releases/latest'
-assert_contains "$MOCK_CURL_LOG" '/download/v9.8.7/openlogi-v9.8.7-linux-amd64.deb'
-assert_contains "$MOCK_CURL_LOG" '/download/v9.8.7/openlogi-v9.8.7-linux-amd64.deb.minisig'
+assert_contains "$MOCK_CURL_LOG" '/download/v9.8.7/betterlogi-v9.8.7-linux-amd64.deb'
+assert_contains "$MOCK_CURL_LOG" '/download/v9.8.7/betterlogi-v9.8.7-linux-amd64.deb.minisig'
 assert_contains "$MOCK_CURL_LOG" '/download/v9.8.7/SHA256SUMS'
 assert_contains "$MOCK_MINISIGN_LOG" 'minisign -V -P RWRRkFtw+rqkvTlCTGKUszSE5dX9CK1teaQD45jO4P9rYlWLO4/nHVUF -m '
 assert_contains "$MOCK_LOG" 'sudo apt-get install -y '
 assert_contains "$MOCK_LOG" 'systemctl --user daemon-reload'
-assert_contains "$MOCK_LOG" 'systemctl --user enable --now openlogi-agent.service'
-assert_contains "$OUTPUT" 'Authenticated and verified openlogi-v9.8.7-linux-amd64.deb before privilege escalation.'
+assert_contains "$MOCK_LOG" 'systemctl --user enable --now betterlogi-agent.service'
+assert_contains "$OUTPUT" 'Authenticated and verified betterlogi-v9.8.7-linux-amd64.deb before privilege escalation.'
 [ "$(grep -c '^sudo ' "$MOCK_LOG")" -eq 1 ]
 installed_temp=$(cat "$MOCK_PACKAGE_PATH")
 [ ! -d "${installed_temp%/*}" ]
@@ -293,7 +293,7 @@ for specification in \
   MOCK_ARCH=aarch64
   export MOCK_ARCH
   dash "$INSTALLER" --version v1.2.3 --package-manager "$manager" --no-start >"$OUTPUT"
-  assert_contains "$MOCK_CURL_LOG" "/download/v1.2.3/openlogi-v1.2.3-linux-arm64.${extension}"
+  assert_contains "$MOCK_CURL_LOG" "/download/v1.2.3/betterlogi-v1.2.3-linux-arm64.${extension}"
   assert_contains "$MOCK_LOG" "sudo ${package_command} "
   assert_not_contains "$MOCK_LOG" 'systemctl '
   [ "$(grep -c '^sudo ' "$MOCK_LOG")" -eq 1 ]
@@ -304,7 +304,7 @@ done
 reset_logs
 dash "$INSTALLER" --version 1.2.3 --package-manager rpm --dry-run >"$OUTPUT"
 assert_contains "$OUTPUT" 'Would run: sudo rpm -Uvh '
-assert_contains "$OUTPUT" 'Would run: systemctl --user enable --now openlogi-agent.service'
+assert_contains "$OUTPUT" 'Would run: systemctl --user enable --now betterlogi-agent.service'
 [ ! -s "$MOCK_LOG" ]
 
 # A bad package signature must fail before checksum acceptance, sudo, or the
@@ -337,14 +337,14 @@ mkdir -p \
   "${SOURCE_REPO}/design/icon" \
   "${SOURCE_REPO}/target/release"
 cp "$INSTALLER" "${SOURCE_REPO}/packaging/linux/install.sh"
-cp "${REPO_ROOT}/packaging/linux/udev/70-openlogi.rules" \
-  "${SOURCE_REPO}/packaging/linux/udev/70-openlogi.rules"
-cp "${REPO_ROOT}/packaging/linux/systemd/openlogi-agent.service" \
-  "${SOURCE_REPO}/packaging/linux/systemd/openlogi-agent.service"
-cp "${REPO_ROOT}/packaging/linux/desktop/openlogi.desktop" \
-  "${SOURCE_REPO}/packaging/linux/desktop/openlogi.desktop"
+cp "${REPO_ROOT}/packaging/linux/udev/70-betterlogi.rules" \
+  "${SOURCE_REPO}/packaging/linux/udev/70-betterlogi.rules"
+cp "${REPO_ROOT}/packaging/linux/systemd/betterlogi-agent.service" \
+  "${SOURCE_REPO}/packaging/linux/systemd/betterlogi-agent.service"
+cp "${REPO_ROOT}/packaging/linux/desktop/betterlogi.desktop" \
+  "${SOURCE_REPO}/packaging/linux/desktop/betterlogi.desktop"
 : >"${SOURCE_REPO}/design/icon/openlogi.png"
-for binary in openlogi openlogi-desktop openlogi-overlay openlogi-agent; do
+for binary in betterlogi betterlogi-desktop betterlogi-overlay betterlogi-agent; do
   printf '#!/bin/sh\n' >"${SOURCE_REPO}/target/release/${binary}"
   chmod +x "${SOURCE_REPO}/target/release/${binary}"
 done
@@ -352,14 +352,14 @@ done
 SOURCE_PREFIX=${WORK_DIR}/prefix
 dash "${SOURCE_REPO}/packaging/linux/install.sh" \
   --from-source --prefix "$SOURCE_PREFIX" >"$OUTPUT"
-for binary in openlogi openlogi-desktop openlogi-overlay openlogi-agent; do
+for binary in betterlogi betterlogi-desktop betterlogi-overlay betterlogi-agent; do
   assert_contains "$MOCK_LOG" "/target/release/${binary} ${SOURCE_PREFIX}/bin/${binary}"
 done
-assert_contains "$MOCK_LOG" '/etc/udev/rules.d/70-openlogi.rules'
-assert_contains "$MOCK_LOG" '/usr/lib/systemd/user/openlogi-agent.service'
-assert_contains "$MOCK_LOG" '/usr/share/applications/openlogi.desktop'
-assert_contains "$MOCK_LOG" '/usr/share/icons/hicolor/1024x1024/apps/openlogi.png'
-assert_contains "$MOCK_SERVICE_CAPTURE" "ExecStart=${SOURCE_PREFIX}/bin/openlogi-agent"
-assert_contains "$MOCK_LOG" 'systemctl --user enable --now openlogi-agent.service'
+assert_contains "$MOCK_LOG" '/etc/udev/rules.d/70-betterlogi.rules'
+assert_contains "$MOCK_LOG" '/usr/lib/systemd/user/betterlogi-agent.service'
+assert_contains "$MOCK_LOG" '/usr/share/applications/betterlogi.desktop'
+assert_contains "$MOCK_LOG" '/usr/share/icons/hicolor/1024x1024/apps/betterlogi.png'
+assert_contains "$MOCK_SERVICE_CAPTURE" "ExecStart=${SOURCE_PREFIX}/bin/betterlogi-agent"
+assert_contains "$MOCK_LOG" 'systemctl --user enable --now betterlogi-agent.service'
 
 printf '%s\n' 'install.sh smoke tests passed'

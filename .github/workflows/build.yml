@@ -136,7 +136,7 @@ jobs:
     permissions:
       contents: read
     env:
-      OPENLOGI_BUNDLE_ASSETS: ${{ vars.OPENLOGI_BUNDLE_ASSETS }}
+      BETTERLOGI_BUNDLE_ASSETS: ${{ vars.BETTERLOGI_BUNDLE_ASSETS }}
     steps:
       - uses: actions/checkout@v7
 
@@ -173,7 +173,7 @@ jobs:
             echo "No Xcode 26 on this runner; the app icon cannot be compiled." >&2
             exit 1
           fi
-          echo "OPENLOGI_DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          echo "BETTERLOGI_DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
           echo "Building with $xcode"
 
       - name: Load release secrets from 1Password
@@ -195,9 +195,6 @@ jobs:
           APPLE_AGENT_PROVISIONING_PROFILE: ${{ secrets.OP_APPLE_SECRET_ITEM }}/APPLE_AGENT_PROVISIONING_PROFILE
           GITHUB_APP_ID: ${{ secrets.OP_GITHUB_APP_ITEM }}/GITHUB_APP_ID
           GITHUB_APP_PRIVATE_KEY: ${{ secrets.OP_GITHUB_APP_ITEM }}/GITHUB_APP_PRIVATE_KEY
-          OPENLOGI_UPDATE_BASE_URL: ${{ secrets.OP_R2_SECRET_ITEM }}/OPENLOGI_UPDATE_BASE_URL
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.OP_R2_SECRET_ITEM }}/OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY
-          OPENLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ secrets.OP_R2_SECRET_ITEM }}/OPENLOGI_SPARKLE_PUBLIC_ED_KEY
 
       - name: Cache Homebrew downloads
         uses: actions/cache@v6
@@ -213,7 +210,7 @@ jobs:
         run: |
           # cargo-bundle has bottles for both hosted macOS architectures.
           # Installing the bottle avoids compiling the tool from source in
-          # every release leg before OpenLogi itself can start building.
+          # every release leg before BetterLogi itself can start building.
           brew install librsvg create-dmg cargo-bundle
 
       - name: Validate release secrets
@@ -228,9 +225,9 @@ jobs:
           APPLE_AGENT_PROVISIONING_PROFILE: ${{ steps.load_secrets.outputs.APPLE_AGENT_PROVISIONING_PROFILE }}
           GITHUB_APP_ID: ${{ steps.load_secrets.outputs.GITHUB_APP_ID }}
           GITHUB_APP_PRIVATE_KEY: ${{ steps.load_secrets.outputs.GITHUB_APP_PRIVATE_KEY }}
-          OPENLOGI_UPDATE_BASE_URL: ${{ steps.load_secrets.outputs.OPENLOGI_UPDATE_BASE_URL }}
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ steps.load_secrets.outputs.OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
-          OPENLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ steps.load_secrets.outputs.OPENLOGI_SPARKLE_PUBLIC_ED_KEY }}
+          BETTERLOGI_UPDATE_BASE_URL: https://github.com/${{ github.repository }}/releases
+          BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
+          BETTERLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ secrets.BETTERLOGI_SPARKLE_PUBLIC_ED_KEY }}
         run: |
           set -euo pipefail
           : "${APPLE_SIGNING_IDENTITY:?Configure APPLE_SIGNING_IDENTITY in 1Password}"
@@ -242,9 +239,9 @@ jobs:
           : "${APPLE_AGENT_PROVISIONING_PROFILE:?Configure APPLE_AGENT_PROVISIONING_PROFILE in 1Password}"
           : "${GITHUB_APP_ID:?Configure GITHUB_APP_ID in 1Password}"
           : "${GITHUB_APP_PRIVATE_KEY:?Configure GITHUB_APP_PRIVATE_KEY in 1Password}"
-          : "${OPENLOGI_UPDATE_BASE_URL:?Configure OPENLOGI_UPDATE_BASE_URL in 1Password}"
-          : "${OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY:?Configure OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY in 1Password}"
-          : "${OPENLOGI_SPARKLE_PUBLIC_ED_KEY:?Configure OPENLOGI_SPARKLE_PUBLIC_ED_KEY in 1Password}"
+          : "${BETTERLOGI_UPDATE_BASE_URL:?BETTERLOGI_UPDATE_BASE_URL is derived from the repository}"
+          : "${BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY:?Set the BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY repository secret}"
+          : "${BETTERLOGI_SPARKLE_PUBLIC_ED_KEY:?Set the BETTERLOGI_SPARKLE_PUBLIC_ED_KEY repository secret}"
 
       - name: Import Apple signing certificate
         if: ${{ inputs.sign }}
@@ -253,25 +250,25 @@ jobs:
           p12-file-base64: ${{ steps.load_secrets.outputs.APPLE_CERTIFICATE }}
           p12-password: ${{ steps.load_secrets.outputs.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: Build and package OpenLogi
+      - name: Build and package BetterLogi
         env:
           APPLE_SIGNING_IDENTITY: ${{ steps.load_secrets.outputs.APPLE_SIGNING_IDENTITY }}
           APPLE_AGENT_PROVISIONING_PROFILE: ${{ steps.load_secrets.outputs.APPLE_AGENT_PROVISIONING_PROFILE }}
-          OPENLOGI_UPDATE_BASE_URL: ${{ steps.load_secrets.outputs.OPENLOGI_UPDATE_BASE_URL }}
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ steps.load_secrets.outputs.OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
+          BETTERLOGI_UPDATE_BASE_URL: https://github.com/${{ github.repository }}/releases
+          BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
           # With the key, the bundle embeds Sparkle.framework and reads its
           # per-architecture appcast; an unsigned build has none and updates
           # through the built-in engine.
-          OPENLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ steps.load_secrets.outputs.OPENLOGI_SPARKLE_PUBLIC_ED_KEY }}
+          BETTERLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ secrets.BETTERLOGI_SPARKLE_PUBLIC_ED_KEY }}
           # `macos package` stamps it as every bundle's CFBundleVersion; empty
           # means the crate version.
-          OPENLOGI_BUILD_VERSION: ${{ inputs.build_version }}
+          BETTERLOGI_BUILD_VERSION: ${{ inputs.build_version }}
         run: |
           set -euo pipefail
           if [ "${{ inputs.sign }}" = "true" ]; then
             # xtask checks the profile before it builds, and the signed agent
             # against it after signing.
-            profile="$RUNNER_TEMP/openlogi-agent.provisionprofile"
+            profile="$RUNNER_TEMP/betterlogi-agent.provisionprofile"
             printf '%s' "$APPLE_AGENT_PROVISIONING_PROFILE" | base64 --decode > "$profile"
             cargo run -p xtask -- macos package --target ${{ matrix.target }} \
               --sign-identity "$APPLE_SIGNING_IDENTITY" \
@@ -285,12 +282,12 @@ jobs:
           EXPECTED_ARCH: ${{ matrix.arch }}
         run: |
           set -euo pipefail
-          app="target/release/bundle/osx/OpenLogi.app"
+          app="target/release/bundle/osx/BetterLogi.app"
           binaries=(
-            "$app/Contents/MacOS/openlogi-desktop"
-            "$app/Contents/MacOS/openlogi"
-            "$app/Contents/Library/LoginItems/OpenLogi Agent.app/Contents/MacOS/openlogi-agent"
-            "$app/Contents/Library/LoginItems/OpenLogi Overlay.app/Contents/MacOS/openlogi-overlay"
+            "$app/Contents/MacOS/betterlogi-desktop"
+            "$app/Contents/MacOS/betterlogi"
+            "$app/Contents/Library/LoginItems/BetterLogi Agent.app/Contents/MacOS/betterlogi-agent"
+            "$app/Contents/Library/LoginItems/BetterLogi Overlay.app/Contents/MacOS/betterlogi-overlay"
           )
           for binary in "${binaries[@]}"; do
             archs=$(lipo -archs "$binary")
@@ -305,7 +302,7 @@ jobs:
       - name: Verify production bundle identities
         run: |
           set -euo pipefail
-          app="target/release/bundle/osx/OpenLogi.app"
+          app="target/release/bundle/osx/BetterLogi.app"
           plist() { /usr/libexec/PlistBuddy -c "Print :$2" "$1/Contents/Info.plist"; }
           check() { # bundle expected-id expected-name
             [ "$(plist "$1" CFBundleIdentifier)" = "$2" ]
@@ -313,9 +310,9 @@ jobs:
             [ "$(plist "$1" CFBundleDisplayName)" = "$3" ]
             [ -f "$1/Contents/Resources/AppIcon.icns" ]
           }
-          check "$app" "org.openlogi.openlogi" "OpenLogi"
-          check "$app/Contents/Library/LoginItems/OpenLogi Agent.app" "org.openlogi.agent" "OpenLogi Agent"
-          check "$app/Contents/Library/LoginItems/OpenLogi Overlay.app" "org.openlogi.overlay" "OpenLogi Overlay"
+          check "$app" "org.betterlogi.betterlogi" "BetterLogi"
+          check "$app/Contents/Library/LoginItems/BetterLogi Agent.app" "org.betterlogi.agent" "BetterLogi Agent"
+          check "$app/Contents/Library/LoginItems/BetterLogi Overlay.app" "org.betterlogi.overlay" "BetterLogi Overlay"
 
       # Same deliberate redundancy for Sparkle: a release that reads the wrong
       # architecture's feed installs a DMG that cannot run, and one whose
@@ -324,20 +321,20 @@ jobs:
         if: ${{ inputs.sign }}
         env:
           EXPECTED_ARCH: ${{ matrix.arch }}
-          OPENLOGI_UPDATE_BASE_URL: ${{ steps.load_secrets.outputs.OPENLOGI_UPDATE_BASE_URL }}
-          OPENLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ steps.load_secrets.outputs.OPENLOGI_SPARKLE_PUBLIC_ED_KEY }}
-          OPENLOGI_BUILD_VERSION: ${{ inputs.build_version }}
+          BETTERLOGI_UPDATE_BASE_URL: https://github.com/${{ github.repository }}/releases
+          BETTERLOGI_SPARKLE_PUBLIC_ED_KEY: ${{ secrets.BETTERLOGI_SPARKLE_PUBLIC_ED_KEY }}
+          BETTERLOGI_BUILD_VERSION: ${{ inputs.build_version }}
         run: |
           set -euo pipefail
-          app="target/release/bundle/osx/OpenLogi.app"
+          app="target/release/bundle/osx/BetterLogi.app"
           framework="$app/Contents/Frameworks/Sparkle.framework"
           plist() { /usr/libexec/PlistBuddy -c "Print :$1" "$app/Contents/Info.plist"; }
           [ -f "$framework/Versions/B/Sparkle" ]
           # Not sandboxed: Sparkle's XPC services are removed, not shipped.
           [ ! -e "$framework/XPCServices" ]
           [ ! -e "$framework/Versions/B/XPCServices" ]
-          [ "$(plist SUFeedURL)" = "${OPENLOGI_UPDATE_BASE_URL%/}/channels/stable/appcast-${EXPECTED_ARCH}.xml" ]
-          [ "$(plist SUPublicEDKey)" = "$OPENLOGI_SPARKLE_PUBLIC_ED_KEY" ]
+          [ "$(plist SUFeedURL)" = "${BETTERLOGI_UPDATE_BASE_URL%/}/latest/download/appcast-${EXPECTED_ARCH}.xml" ]
+          [ "$(plist SUPublicEDKey)" = "$BETTERLOGI_SPARKLE_PUBLIC_ED_KEY" ]
           [ "$(plist SUEnableAutomaticChecks)" = "false" ]
           [ "$(plist SUAllowsAutomaticUpdates)" = "true" ]
           [ "$(plist SUEnableSystemProfiling)" = "false" ]
@@ -346,16 +343,16 @@ jobs:
           # CFBundleVersion; cargo-bundle's build timestamp there would rank
           # above every release, so no update would ever be offered. Without a
           # build version, the crate version stands in for it.
-          [ "$(plist CFBundleVersion)" = "${OPENLOGI_BUILD_VERSION:-$(plist CFBundleShortVersionString)}" ]
+          [ "$(plist CFBundleVersion)" = "${BETTERLOGI_BUILD_VERSION:-$(plist CFBundleShortVersionString)}" ]
 
       - name: Verify signed app bundle
         if: ${{ inputs.sign }}
         run: |
           set -euo pipefail
-          app="target/release/bundle/osx/OpenLogi.app"
-          helper="$app/Contents/Library/LoginItems/OpenLogi Agent.app"
-          overlay="$app/Contents/Library/LoginItems/OpenLogi Overlay.app"
-          cli="$app/Contents/MacOS/openlogi"
+          app="target/release/bundle/osx/BetterLogi.app"
+          helper="$app/Contents/Library/LoginItems/BetterLogi Agent.app"
+          overlay="$app/Contents/Library/LoginItems/BetterLogi Overlay.app"
+          cli="$app/Contents/MacOS/betterlogi"
           framework="$app/Contents/Frameworks/Sparkle.framework"
           codesign --verify --strict --verbose=2 "$app"
           [ -d "$helper" ] && codesign --verify --strict --verbose=2 "$helper"
@@ -389,7 +386,7 @@ jobs:
           APPLE_TEAM_ID: ${{ steps.load_secrets.outputs.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          xcrun notarytool submit target/release/OpenLogi.dmg \
+          xcrun notarytool submit target/release/BetterLogi.dmg \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
@@ -399,15 +396,15 @@ jobs:
         if: ${{ inputs.sign }}
         run: |
           set -euo pipefail
-          xcrun stapler staple target/release/OpenLogi.dmg
-          xcrun stapler validate target/release/OpenLogi.dmg
+          xcrun stapler staple target/release/BetterLogi.dmg
+          xcrun stapler validate target/release/BetterLogi.dmg
 
       - name: Collect DMG artifact
         run: |
           mkdir -p dist
           ref_name="${GITHUB_REF_NAME:-dev}"
           ref_name="${ref_name//\//-}"
-          cp target/release/OpenLogi.dmg "dist/OpenLogi-${ref_name}-macos-${{ matrix.arch }}.dmg"
+          cp target/release/BetterLogi.dmg "dist/BetterLogi-${ref_name}-macos-${{ matrix.arch }}.dmg"
 
       # Here and not in the publish job: Sparkle's BinaryDelta runs only on
       # macOS. The deltas come from the stapled DMG, which holds the exact app
@@ -421,12 +418,12 @@ jobs:
         run: |
           set -euo pipefail
           cargo run -p xtask -- release sparkle-deltas \
-            --dmg "dist/OpenLogi-${GITHUB_REF_NAME}-macos-${{ matrix.arch }}.dmg" \
+            --dmg "dist/BetterLogi-${GITHUB_REF_NAME}-macos-${{ matrix.arch }}.dmg" \
             --tag "$GITHUB_REF_NAME"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: OpenLogi-macos-dmg-${{ matrix.arch }}
+          name: BetterLogi-macos-dmg-${{ matrix.arch }}
           # The deltas travel with their DMG; `release appcast` reads the
           # metadata next to each one in the publish job.
           path: |
@@ -473,7 +470,7 @@ jobs:
       id-token: write
       contents: read
     # The federated credential's subject is bound to this GitHub environment, so the
-    # OIDC `sub` claim stays stable (repo:AprilNEA/OpenLogi:environment:release)
+    # OIDC `sub` claim stays stable (repo:alanfrigo/BetterLogi:environment:release)
     # instead of changing with every tag ref. Only signed (release) runs enter it;
     # an unsigned run needs no secrets, so it takes no environment (fork PRs, which
     # can't access a protected environment at all, then build fine).
@@ -540,61 +537,42 @@ jobs:
           : "${AZURE_SIGNING_ACCOUNT:?Configure AZURE_SIGNING_ACCOUNT in the Azure 1Password item}"
           : "${AZURE_CERT_PROFILE:?Configure AZURE_CERT_PROFILE in the Azure 1Password item}"
 
-      # Same R2 1Password item the macOS job reads: the minisign public key the
-      # binary embeds and the base URL its manifest URL derives from. Without
-      # this env the exe ships with no key, and the updater's Strict policy
-      # fails every Windows check with "policy requires a minisign signature,
-      # but no public key is configured" — auto-update never worked on Windows.
-      - name: Load static updater config from 1Password
-        id: update_config
-        if: ${{ inputs.sign }}
-        # Pinned to an immutable commit (matching the Crowdin workflow): this step runs
-        # with the 1Password service-account token during signed release
-        # builds, so a repointed mutable tag must not be able to swap the code.
-        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1
-        with:
-          export-env: false
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OPENLOGI_UPDATE_BASE_URL: ${{ secrets.OP_R2_SECRET_ITEM }}/OPENLOGI_UPDATE_BASE_URL
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.OP_R2_SECRET_ITEM }}/OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY
-
-      # Same rationale as the Azure gate above: load-secrets emits empty
-      # outputs on a missing item, and an empty key would rebuild the broken
-      # no-key release instead of failing here with the cause named.
+      # The minisign public key the binary embeds (a repository secret) and the
+      # base URL its manifest URL derives from. Without the key the updater's
+      # Strict policy fails every Windows check, so fail here with the cause.
       - name: Validate updater config
         if: ${{ inputs.sign }}
         shell: bash
         env:
-          OPENLOGI_UPDATE_BASE_URL: ${{ steps.update_config.outputs.OPENLOGI_UPDATE_BASE_URL }}
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ steps.update_config.outputs.OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
+          BETTERLOGI_UPDATE_BASE_URL: https://github.com/${{ github.repository }}/releases
+          BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
         run: |
           set -euo pipefail
-          : "${OPENLOGI_UPDATE_BASE_URL:?Configure OPENLOGI_UPDATE_BASE_URL in the R2 1Password item}"
-          : "${OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY:?Configure OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY in the R2 1Password item}"
+          : "${BETTERLOGI_UPDATE_BASE_URL:?Configure BETTERLOGI_UPDATE_BASE_URL repository secret}"
+          : "${BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY:?Configure BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY repository secret}"
 
       # The CLI ships inside the same zip and MSI rather than as a separate
       # artifact, so job and artifact names carry no GUI qualifier. The GUI is
       # a thin IPC client; the headless agent (ported in
       # #167) owns the device I/O, input hook, and IPC server, and the GUI
-      # spawns a sibling `openlogi-agent.exe` when the pipe is absent — so the
+      # spawns a sibling `betterlogi-agent.exe` when the pipe is absent — so the
       # agent MUST ship next to the GUI or the app connects to nothing (#347).
-      # The updater env mirrors the macOS bundle step: openlogi-desktop reads the
+      # The updater env mirrors the macOS bundle step: betterlogi-desktop reads the
       # key and update host via option_env! at compile time and derives the
       # manifest URL from the host itself. Unsigned builds get empty values:
       # the app then reads the official host and keeps the fail-closed dev
       # behaviour, since no key is embedded.
-      - name: Build OpenLogi executables
+      - name: Build BetterLogi executables
         shell: bash
         env:
-          OPENLOGI_UPDATE_BASE_URL: ${{ steps.update_config.outputs.OPENLOGI_UPDATE_BASE_URL }}
-          OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ steps.update_config.outputs.OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
+          BETTERLOGI_UPDATE_BASE_URL: https://github.com/${{ github.repository }}/releases
+          BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY: ${{ secrets.BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY }}
         run: |
           set -euo pipefail
-          cargo build --release -p openlogi-desktop -p openlogi-overlay -p openlogi-agent -p openlogi --target ${{ matrix.target }}
+          cargo build --release -p betterlogi-desktop -p betterlogi-overlay -p betterlogi-agent -p betterlogi --target ${{ matrix.target }}
 
       # Federated (passwordless) login. Requires an app registration whose federated
-      # credential subject is `repo:AprilNEA/OpenLogi:environment:release`, granted the
+      # credential subject is `repo:alanfrigo/BetterLogi:environment:release`, granted the
       # "Artifact Signing Certificate Profile Signer" role on the signing account.
       - name: Azure login (OIDC)
         if: ${{ inputs.sign }}
@@ -620,7 +598,7 @@ jobs:
       # Authenticode-signs via Artifact Signing (ex-Trusted Signing). The action only
       # runs on Windows runners. azure/login leaves an az CLI session that the action's
       # default AzureCliCredential picks up, so no azure-* secret inputs are needed.
-      - name: Sign OpenLogi Windows executables with Artifact Signing
+      - name: Sign BetterLogi Windows executables with Artifact Signing
         if: ${{ inputs.sign }}
         uses: azure/artifact-signing-action@v2
         with:
@@ -629,10 +607,10 @@ jobs:
           certificate-profile-name: ${{ steps.azure_config.outputs.AZURE_CERT_PROFILE }}
           # `files` is a newline-separated list; one call signs every PE file.
           files: |
-            ${{ github.workspace }}\target\${{ matrix.target }}\release\openlogi-desktop.exe
-            ${{ github.workspace }}\target\${{ matrix.target }}\release\openlogi-overlay.exe
-            ${{ github.workspace }}\target\${{ matrix.target }}\release\openlogi-agent.exe
-            ${{ github.workspace }}\target\${{ matrix.target }}\release\openlogi.exe
+            ${{ github.workspace }}\target\${{ matrix.target }}\release\betterlogi-desktop.exe
+            ${{ github.workspace }}\target\${{ matrix.target }}\release\betterlogi-overlay.exe
+            ${{ github.workspace }}\target\${{ matrix.target }}\release\betterlogi-agent.exe
+            ${{ github.workspace }}\target\${{ matrix.target }}\release\betterlogi.exe
           # Timestamping is mandatory: without it the signature expires after
           # 3 days. The URL must stay http — SignTool rejects an https /tr up
           # front ("SignTool Error: Invalid Timestamp URL", v0.6.5) before
@@ -653,7 +631,7 @@ jobs:
           # HashMismatch (bytes no longer match the signature) are trust-store
           # independent and always ship-blockers; NotTrusted/UnknownError depend
           # on the runner's trust store, so they stay log-only.
-          foreach ($exe in 'openlogi-desktop.exe', 'openlogi-overlay.exe', 'openlogi-agent.exe', 'openlogi.exe') {
+          foreach ($exe in 'betterlogi-desktop.exe', 'betterlogi-overlay.exe', 'betterlogi-agent.exe', 'betterlogi.exe') {
             $sig = Get-AuthenticodeSignature "target\${{ matrix.target }}\release\$exe"
             $sig | Format-List
             if ($null -eq $sig.SignerCertificate -or
@@ -665,22 +643,22 @@ jobs:
 
       # The portable artifact is a zip of every exe: a bare exe has nowhere to
       # put the agent, and GUI-only can never work (#347). Inside the zip the
-      # GUI carries the product name (`OpenLogi.exe`, matching the MSI layout)
+      # GUI carries the product name (`BetterLogi.exe`, matching the MSI layout)
       # and the agent keeps the exact name the GUI's sibling lookup expects.
-      # `openlogi.exe` is the CLI the docs and both issue templates ask users to
+      # `betterlogi.exe` is the CLI the docs and both issue templates ask users to
       # run; it is the same binary Linux installs to /usr/bin and macOS embeds
-      # at Contents/MacOS/openlogi. It goes in `bin\` rather than beside the
+      # at Contents/MacOS/betterlogi. It goes in `bin\` rather than beside the
       # GUI because Windows path comparison is case-insensitive: staging it as
-      # `stage\openlogi.exe` would overwrite `stage\OpenLogi.exe` and ship a zip
+      # `stage\betterlogi.exe` would overwrite `stage\BetterLogi.exe` and ship a zip
       # with the CLI wearing the GUI's name. The MSI splits them the same way.
       - name: Collect signed portable zip artifact
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist, stage, stage\bin | Out-Null
-          Copy-Item target\${{ matrix.target }}\release\openlogi-desktop.exe stage\OpenLogi.exe
-          Copy-Item target\${{ matrix.target }}\release\openlogi-overlay.exe stage\openlogi-overlay.exe
-          Copy-Item target\${{ matrix.target }}\release\openlogi-agent.exe stage\openlogi-agent.exe
-          Copy-Item target\${{ matrix.target }}\release\openlogi.exe stage\bin\openlogi.exe
+          Copy-Item target\${{ matrix.target }}\release\betterlogi-desktop.exe stage\BetterLogi.exe
+          Copy-Item target\${{ matrix.target }}\release\betterlogi-overlay.exe stage\betterlogi-overlay.exe
+          Copy-Item target\${{ matrix.target }}\release\betterlogi-agent.exe stage\betterlogi-agent.exe
+          Copy-Item target\${{ matrix.target }}\release\betterlogi.exe stage\bin\betterlogi.exe
           # Guard the collision above: four inputs must produce four staged
           # files. A case-insensitive overwrite would silently leave three.
           $staged = (Get-ChildItem stage -Recurse -File).Count
@@ -690,14 +668,14 @@ jobs:
           }
           # The MSI extracts this ZIP but only installs its explicitly listed
           # executables, so the portable marker never enters an MSI install.
-          Copy-Item packaging\windows\openlogi-installation.json stage\openlogi-installation.json
+          Copy-Item packaging\windows\betterlogi-installation.json stage\betterlogi-installation.json
           # Zipping after signing is safe: Authenticode lives in the PE files.
           $ref = $env:GITHUB_REF_NAME -replace '/', '-'
-          Compress-Archive -Path stage\* -DestinationPath "dist\OpenLogi-$ref-windows-${{ matrix.arch }}.zip"
+          Compress-Archive -Path stage\* -DestinationPath "dist\BetterLogi-$ref-windows-${{ matrix.arch }}.zip"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: OpenLogi-windows-${{ matrix.arch }}
+          name: BetterLogi-windows-${{ matrix.arch }}
           path: dist/*.zip
           # 'warn' (the default) would let a no-zip job stay green, and publish
           # would then die at the by-name download instead of shipping DMG-only.
@@ -730,16 +708,16 @@ jobs:
       contents: read
     environment: ${{ inputs.sign && 'release' || '' }}
     steps:
-      # Needed for packaging/windows/OpenLogi.wxs.
+      # Needed for packaging/windows/BetterLogi.wxs.
       - uses: actions/checkout@v7
 
       # The portable zip from this arch's windows leg, containing the
-      # already-signed OpenLogi.exe, openlogi-agent.exe, openlogi-overlay.exe,
-      # and openlogi.exe. The MSI packages exactly the bytes the portable
+      # already-signed BetterLogi.exe, betterlogi-agent.exe, betterlogi-overlay.exe,
+      # and betterlogi.exe. The MSI packages exactly the bytes the portable
       # artifact ships.
       - uses: actions/download-artifact@v8
         with:
-          name: OpenLogi-windows-${{ matrix.arch }}
+          name: BetterLogi-windows-${{ matrix.arch }}
           path: signed-zip
 
       - name: Extract the signed exes
@@ -791,7 +769,7 @@ jobs:
         # MSI (validation, cab layout), and nothing in CI installs the MSI, so
         # drift would only surface on end-user machines. Bump deliberately.
         # The UI extension (the progress-only dialog flow) and Util extension
-        # (util:CloseApplication in OpenLogi.wxs) are pinned to the same version
+        # (util:CloseApplication in BetterLogi.wxs) are pinned to the same version
         # — WiX extensions release in lockstep with wix.
         run: |
           dotnet tool install --global wix --version 6.0.2
@@ -801,12 +779,12 @@ jobs:
       - name: Build the MSI
         shell: pwsh
         env:
-          OPENLOGI_BUILD_VERSION: ${{ inputs.build_version }}
+          BETTERLOGI_BUILD_VERSION: ${{ inputs.build_version }}
         run: |
           # ProductVersion is the release's build version (numeric, three or
           # four fields); a build that is not a release makes a throwaway
           # 0.0.0 package.
-          $version = $env:OPENLOGI_BUILD_VERSION
+          $version = $env:BETTERLOGI_BUILD_VERSION
           if (-not $version) {
             $version = '0.0.0'
           }
@@ -816,16 +794,16 @@ jobs:
           # by-name download, the extract step's guard) should make the misses
           # unreachable; the guards turn a confusing "$null.FullName -> empty
           # -d" wix error into a named cause if those invariants ever shift.
-          $gui = Get-Item signed-exe\OpenLogi.exe -ErrorAction SilentlyContinue
-          $overlay = Get-Item signed-exe\openlogi-overlay.exe -ErrorAction SilentlyContinue
-          $agent = Get-Item signed-exe\openlogi-agent.exe -ErrorAction SilentlyContinue
-          $cli = Get-Item signed-exe\bin\openlogi.exe -ErrorAction SilentlyContinue
+          $gui = Get-Item signed-exe\BetterLogi.exe -ErrorAction SilentlyContinue
+          $overlay = Get-Item signed-exe\betterlogi-overlay.exe -ErrorAction SilentlyContinue
+          $agent = Get-Item signed-exe\betterlogi-agent.exe -ErrorAction SilentlyContinue
+          $cli = Get-Item signed-exe\bin\betterlogi.exe -ErrorAction SilentlyContinue
           if ($null -eq $gui -or $null -eq $overlay -or $null -eq $agent -or $null -eq $cli) {
-            Write-Error "signed-exe\ must contain OpenLogi.exe, openlogi-overlay.exe, openlogi-agent.exe, and bin\openlogi.exe — nothing to package"
+            Write-Error "signed-exe\ must contain BetterLogi.exe, betterlogi-overlay.exe, betterlogi-agent.exe, and bin\betterlogi.exe — nothing to package"
             exit 1
           }
           New-Item -ItemType Directory -Force -Path out | Out-Null
-          wix build packaging\windows\OpenLogi.wxs `
+          wix build packaging\windows\BetterLogi.wxs `
             -ext WixToolset.UI.wixext `
             -ext WixToolset.Util.wixext `
             -arch ${{ matrix.msi_platform }} `
@@ -834,7 +812,7 @@ jobs:
             -d AgentExeFile="$($agent.FullName)" `
             -d OverlayExeFile="$($overlay.FullName)" `
             -d CliExeFile="$($cli.FullName)" `
-            -o out\OpenLogi.msi
+            -o out\BetterLogi.msi
 
       - name: Azure login (OIDC)
         if: ${{ inputs.sign }}
@@ -853,14 +831,14 @@ jobs:
             Register-PSRepository -Default
           }
 
-      - name: Sign OpenLogi.msi with Artifact Signing
+      - name: Sign BetterLogi.msi with Artifact Signing
         if: ${{ inputs.sign }}
         uses: azure/artifact-signing-action@v2
         with:
           endpoint: ${{ steps.azure_config.outputs.AZURE_SIGNING_ENDPOINT }}
           signing-account-name: ${{ steps.azure_config.outputs.AZURE_SIGNING_ACCOUNT }}
           certificate-profile-name: ${{ steps.azure_config.outputs.AZURE_CERT_PROFILE }}
-          files: ${{ github.workspace }}\out\OpenLogi.msi
+          files: ${{ github.workspace }}\out\BetterLogi.msi
           # http on purpose — see the exe signing step.
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           cache-dependencies: false
@@ -869,13 +847,13 @@ jobs:
         if: ${{ inputs.sign }}
         shell: pwsh
         run: |
-          $sig = Get-AuthenticodeSignature out\OpenLogi.msi
+          $sig = Get-AuthenticodeSignature out\BetterLogi.msi
           $sig | Format-List
           # Same gate as the exe: NotSigned/HashMismatch are trust-store
           # independent ship-blockers; NotTrusted/UnknownError stay log-only.
           if ($null -eq $sig.SignerCertificate -or
               "$($sig.Status)" -in 'NotSigned', 'HashMismatch') {
-            Write-Error "OpenLogi.msi Authenticode signature is invalid: $($sig.Status)"
+            Write-Error "BetterLogi.msi Authenticode signature is invalid: $($sig.Status)"
             exit 1
           }
 
@@ -885,11 +863,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           # Renaming after signing is safe: the signature lives in the MSI.
           $ref = $env:GITHUB_REF_NAME -replace '/', '-'
-          Copy-Item out\OpenLogi.msi "dist\OpenLogi-$ref-windows-${{ matrix.arch }}.msi"
+          Copy-Item out\BetterLogi.msi "dist\BetterLogi-$ref-windows-${{ matrix.arch }}.msi"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: OpenLogi-windows-msi-${{ matrix.arch }}
+          name: BetterLogi-windows-msi-${{ matrix.arch }}
           path: dist/*.msi
           if-no-files-found: error
 
@@ -955,7 +933,7 @@ jobs:
           NFPM_SHA256: ${{ matrix.nfpm_sha256 }}
         run: |
           sudo apt-get update
-          # The Linux packaging task builds openlogi-desktop, which links GPUI's full
+          # The Linux packaging task builds betterlogi-desktop, which links GPUI's full
           # wayland / x11 stack — keep this in sync with ci.yml's Linux deps
           # (the proven set). The previous short list was missing
           # libxkbcommon-x11-dev / libwayland-dev / libx11-xcb-dev, so every
@@ -978,7 +956,7 @@ jobs:
         env:
           MAX_GLIBC_VERSION: "2.35"
         run: |
-          for binary in openlogi openlogi-desktop openlogi-overlay openlogi-agent; do
+          for binary in betterlogi betterlogi-desktop betterlogi-overlay betterlogi-agent; do
             required=$(
               readelf --version-info "target/release/$binary" \
                 | sed -n 's/.*Name: GLIBC_\([0-9][0-9.]*\).*/\1/p' \
@@ -1007,17 +985,17 @@ jobs:
           for pkg in target/release/*.deb target/release/*.rpm; do
             [ -f "$pkg" ] || continue
             ext="${pkg##*.}"
-            cp "$pkg" "dist/openlogi-${ref_name}-linux-${PKG_ARCH}.${ext}"
+            cp "$pkg" "dist/betterlogi-${ref_name}-linux-${PKG_ARCH}.${ext}"
           done
           # .pkg.tar.zst has a compound extension; handle it separately.
           for pkg in target/release/*.pkg.tar.zst; do
             [ -f "$pkg" ] || continue
-            cp "$pkg" "dist/openlogi-${ref_name}-linux-${PKG_ARCH}.pkg.tar.zst"
+            cp "$pkg" "dist/betterlogi-${ref_name}-linux-${PKG_ARCH}.pkg.tar.zst"
           done
 
       - uses: actions/upload-artifact@v7
         with:
-          name: OpenLogi-linux-packages-${{ matrix.arch }}
+          name: BetterLogi-linux-packages-${{ matrix.arch }}
           path: dist/*
 
   # The same tree the .deb/.rpm are cut from, packaged as a single-file Flatpak
@@ -1070,7 +1048,7 @@ jobs:
           sudo apt-get install -y flatpak flatpak-builder
           flatpak remote-add --if-not-exists --user \
             flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          # llvm20 because openlogi-camera pulls v4l2-sys-mit, whose build
+          # llvm20 because betterlogi-camera pulls v4l2-sys-mit, whose build
           # script runs bindgen and dlopens libclang; the base SDK ships none.
           flatpak install --user -y --noninteractive flathub \
             "org.freedesktop.Platform//${RUNTIME_VERSION}" \
@@ -1093,7 +1071,7 @@ jobs:
           python3 - "$version" "$released" <<'PY'
           import re, sys
           version, released = sys.argv[1], sys.argv[2]
-          path = "packaging/linux/flatpak/org.openlogi.OpenLogi.metainfo.xml"
+          path = "packaging/linux/flatpak/org.betterlogi.BetterLogi.metainfo.xml"
           text = open(path, encoding="utf-8").read()
           text, n = re.subn(
               r'<release version="[^"]*" date="[^"]*"/>',
@@ -1105,7 +1083,7 @@ jobs:
               raise SystemExit("no <release> element to stamp in " + path)
           open(path, "w", encoding="utf-8").write(text)
           PY
-          grep '<release ' packaging/linux/flatpak/org.openlogi.OpenLogi.metainfo.xml
+          grep '<release ' packaging/linux/flatpak/org.betterlogi.BetterLogi.metainfo.xml
 
       - name: Build the bundle
         env:
@@ -1119,7 +1097,7 @@ jobs:
           # protection it provides buys nothing.
           flatpak-builder --user --disable-rofiles-fuse --force-clean \
             --repo=repo --default-branch=stable \
-            build packaging/linux/flatpak/org.openlogi.OpenLogi.yml
+            build packaging/linux/flatpak/org.betterlogi.BetterLogi.yml
 
           mkdir -p dist
           ref_name="${GITHUB_REF_NAME:-dev}"
@@ -1129,13 +1107,13 @@ jobs:
           # does not already have the freedesktop platform.
           flatpak build-bundle \
             --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo \
-            repo "dist/openlogi-${ref_name}-linux-${PKG_ARCH}.flatpak" \
-            org.openlogi.OpenLogi stable
+            repo "dist/betterlogi-${ref_name}-linux-${PKG_ARCH}.flatpak" \
+            org.betterlogi.BetterLogi stable
           ls -lh dist/
 
       - uses: actions/upload-artifact@v7
         with:
-          name: OpenLogi-linux-flatpak-${{ matrix.arch }}
+          name: BetterLogi-linux-flatpak-${{ matrix.arch }}
           path: dist/*
           # Already a compressed OSTree stream; zipping it again buys nothing.
           compression-level: 0
@@ -1143,8 +1121,7 @@ jobs:
   # Single owner of the GitHub Release. softprops/action-gh-release@v3 creates the
   # release as a draft, uploads every asset to that (mutable) draft, then publishes
   # it as its final step — so the release only becomes immutable once all DMGs and
-  # checksums are attached. The static updater assets are pushed to R2 *before* that
-  # softprops call, so the GitHub Release is the last thing published.
+  # checksums are attached, including the updater feeds the app reads from it.
 
   # Surfaces each platform's result as a workflow output so the caller's publish
   # gate can ship a partial release (e.g. the macOS DMG even when a Windows leg

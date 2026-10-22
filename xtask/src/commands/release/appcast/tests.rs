@@ -59,22 +59,22 @@ fn touch(dir: &Path, name: &str, contents: &[u8]) {
 #[test]
 fn every_architecture_needs_exactly_one_dmg() {
     let dist = tempfile::tempdir().unwrap();
-    touch(dist.path(), "OpenLogi-v0.8.14-macos-x86_64.dmg", b"x86");
+    touch(dist.path(), "BetterLogi-v0.8.14-macos-x86_64.dmg", b"x86");
     touch(
         dist.path(),
-        "OpenLogi-v0.8.14-macos-x86_64.dmg.minisig",
+        "BetterLogi-v0.8.14-macos-x86_64.dmg.minisig",
         b"sig",
     );
-    touch(dist.path(), "OpenLogi-v0.8.14-windows-x86_64.msi", b"msi");
+    touch(dist.path(), "BetterLogi-v0.8.14-windows-x86_64.msi", b"msi");
     touch(dist.path(), "SHA256SUMS", b"sums");
     let missing = release_dmgs(dist.path()).unwrap_err();
     assert!(missing.to_string().contains("no arm64 DMG"), "{missing}");
 
-    touch(dist.path(), "OpenLogi-v0.8.14-macos-arm64.dmg", b"arm");
+    touch(dist.path(), "BetterLogi-v0.8.14-macos-arm64.dmg", b"arm");
     // A delta's name ends in `.sparkle-delta`, so it is never taken for a DMG.
     touch(
         dist.path(),
-        "OpenLogi-v0.8.14-macos-arm64.dmg.from-0.8.13.sparkle-delta",
+        "BetterLogi-v0.8.14-macos-arm64.dmg.from-0.8.13.sparkle-delta",
         b"delta",
     );
     let dmgs = release_dmgs(dist.path()).unwrap();
@@ -85,12 +85,12 @@ fn every_architecture_needs_exactly_one_dmg() {
     assert_eq!(
         found,
         [
-            (MacArch::Arm64, "OpenLogi-v0.8.14-macos-arm64.dmg"),
-            (MacArch::X86_64, "OpenLogi-v0.8.14-macos-x86_64.dmg"),
+            (MacArch::Arm64, "BetterLogi-v0.8.14-macos-arm64.dmg"),
+            (MacArch::X86_64, "BetterLogi-v0.8.14-macos-x86_64.dmg"),
         ]
     );
 
-    touch(dist.path(), "OpenLogi-dev-macos-arm64.dmg", b"arm");
+    touch(dist.path(), "BetterLogi-dev-macos-arm64.dmg", b"arm");
     let duplicate = release_dmgs(dist.path()).unwrap_err();
     assert!(
         duplicate.to_string().contains("two arm64 DMGs"),
@@ -118,7 +118,7 @@ fn release(notes: Option<&str>) -> Release<'static> {
     Release {
         version: "0.8.14",
         pub_date: "Mon, 12 Oct 2026 01:02:03 +0000".into(),
-        page_url: "https://github.com/AprilNEA/OpenLogi/releases/tag/v0.8.14".into(),
+        page_url: "https://github.com/alanfrigo/BetterLogi/releases/tag/v0.8.14".into(),
         notes: notes.map(Into::into),
     }
 }
@@ -129,13 +129,13 @@ fn enclosure(url: &str, length: u64) -> Enclosure {
     enclosure
 }
 
-/// The feed OpenLogi wrote with its own template before rendering moved to
+/// The feed BetterLogi wrote with its own template before rendering moved to
 /// gpui-updater-release. Installed apps have parsed exactly this shape since
 /// 0.8.14, so a release without deltas must keep producing it byte for byte.
 #[test]
 fn a_feed_without_deltas_is_unchanged() {
     let xml = appcast(
-        "https://u.example/channels/stable/appcast-arm64.xml",
+        "https://u.example/latest/download/appcast-arm64.xml",
         item(
             &release(Some("## Fixes\n- a ]]> b\n")),
             enclosure("https://u.example/a.dmg?x=1&y=2", 1234),
@@ -145,17 +145,17 @@ fn a_feed_without_deltas_is_unchanged() {
         r#"<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
-    <title>OpenLogi</title>
-    <link>https://u.example/channels/stable/appcast-arm64.xml</link>
-    <description>OpenLogi updates (stable channel)</description>
+    <title>BetterLogi</title>
+    <link>https://u.example/latest/download/appcast-arm64.xml</link>
+    <description>BetterLogi updates (stable channel)</description>
     <item>
-      <title>OpenLogi 0.8.14</title>
+      <title>BetterLogi 0.8.14</title>
       <pubDate>Mon, 12 Oct 2026 01:02:03 +0000</pubDate>
       <sparkle:version>0.8.14</sparkle:version>
       <sparkle:shortVersionString>0.8.14</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <link>https://github.com/AprilNEA/OpenLogi/releases/tag/v0.8.14</link>
-      <sparkle:fullReleaseNotesLink>https://github.com/AprilNEA/OpenLogi/releases/tag/v0.8.14</sparkle:fullReleaseNotesLink>
+      <link>https://github.com/alanfrigo/BetterLogi/releases/tag/v0.8.14</link>
+      <sparkle:fullReleaseNotesLink>https://github.com/alanfrigo/BetterLogi/releases/tag/v0.8.14</sparkle:fullReleaseNotesLink>
       <description sparkle:format="markdown"><![CDATA[## Fixes
 - a ]]]]><![CDATA[> b
 ]]></description>
@@ -172,9 +172,9 @@ fn a_feed_without_deltas_is_unchanged() {
 fn appcast_item_carries_what_sparkle_reads() {
     // Markup that must survive: XML specials and a CDATA terminator.
     let notes = "## Fixes\n- a < b && c > d\n- literal ]]> stays\n";
-    let url = "https://u.example/releases/v0.8.14/OpenLogi-v0.8.14-macos-arm64.dmg?a=1&b=2";
+    let url = "https://u.example/download/v0.8.14/BetterLogi-v0.8.14-macos-arm64.dmg?a=1&b=2";
     let xml = appcast(
-        "https://u.example/channels/stable/appcast-arm64.xml",
+        "https://u.example/latest/download/appcast-arm64.xml",
         item(&release(Some(notes)), enclosure(url, 1234)),
     );
 
@@ -251,12 +251,12 @@ fn release_dist() -> tempfile::TempDir {
     let dist = tempfile::tempdir().unwrap();
     touch(
         dist.path(),
-        "OpenLogi-v0.8.15-macos-arm64.dmg",
+        "BetterLogi-v0.8.15-macos-arm64.dmg",
         &golden_payload(),
     );
     touch(
         dist.path(),
-        "OpenLogi-v0.8.15-macos-x86_64.dmg",
+        "BetterLogi-v0.8.15-macos-x86_64.dmg",
         b"intel dmg",
     );
     dist
@@ -308,7 +308,7 @@ fn each_feed_offers_its_architectures_dmg_signed_with_the_embedded_key() {
         assert_eq!(
             text(channel, None, "link"),
             format!(
-                "https://updates.example/channels/stable/appcast-{}.xml",
+                "https://updates.example/latest/download/appcast-{}.xml",
                 arch.as_str()
             )
         );
@@ -316,7 +316,7 @@ fn each_feed_offers_its_architectures_dmg_signed_with_the_embedded_key() {
         assert_eq!(
             enclosure.attribute("url").unwrap(),
             format!(
-                "https://updates.example/releases/v0.8.15/OpenLogi-v0.8.15-macos-{}.dmg",
+                "https://updates.example/download/v0.8.15/BetterLogi-v0.8.15-macos-{}.dmg",
                 arch.as_str()
             )
         );
@@ -343,7 +343,7 @@ fn each_feed_offers_its_architectures_dmg_signed_with_the_embedded_key() {
 fn deltas_go_into_their_architectures_feed_signed() {
     let dist = release_dist();
     let out = tempfile::tempdir().unwrap();
-    let arm = "OpenLogi-v0.8.15-macos-arm64.dmg";
+    let arm = "BetterLogi-v0.8.15-macos-arm64.dmg";
     let from_14 = delta(dist.path(), arm, "0.8.14", "0.8.15", b"delta from 14");
     let from_13 = delta(dist.path(), arm, "0.8.13", "0.8.15", b"delta from 13");
     write_appcasts(
@@ -367,7 +367,7 @@ fn deltas_go_into_their_architectures_feed_signed() {
     ]) {
         assert_eq!(
             node.attribute("url").unwrap(),
-            format!("https://updates.example/releases/v0.8.15/{name}")
+            format!("https://updates.example/download/v0.8.15/{name}")
         );
         assert_eq!(node.attribute((SPARKLE_NS, "deltaFrom")), Some(from));
         assert_eq!(
@@ -398,7 +398,7 @@ fn deltas_go_into_their_architectures_feed_signed() {
 
 #[test]
 fn a_delta_that_does_not_fit_this_release_writes_no_feed() {
-    let arm = "OpenLogi-v0.8.15-macos-arm64.dmg";
+    let arm = "BetterLogi-v0.8.15-macos-arm64.dmg";
     let out = tempfile::tempdir().unwrap();
 
     // Made for another release: Sparkle would rebuild a bundle the feed does
@@ -467,8 +467,8 @@ fn a_delta_that_does_not_fit_this_release_writes_no_feed() {
 fn a_key_the_bundles_do_not_embed_signs_nothing() {
     let dist = tempfile::tempdir().unwrap();
     let out = tempfile::tempdir().unwrap();
-    touch(dist.path(), "OpenLogi-v0.8.14-macos-arm64.dmg", b"arm");
-    touch(dist.path(), "OpenLogi-v0.8.14-macos-x86_64.dmg", b"x86");
+    touch(dist.path(), "BetterLogi-v0.8.14-macos-arm64.dmg", b"arm");
+    touch(dist.path(), "BetterLogi-v0.8.14-macos-x86_64.dmg", b"x86");
     let other_key = BASE64.encode([8_u8; 32]);
     let error = write_appcasts(
         &args(dist.path(), out.path(), "v0.8.14", PUBLIC_KEY),

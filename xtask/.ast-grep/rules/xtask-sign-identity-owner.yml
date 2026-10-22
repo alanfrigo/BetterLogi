@@ -12,4 +12,4 @@ files:
 ignores:
   - xtask/src/commands/macos/bundle/signing.rs
 rule:
-  pattern: '"OPENLOGI_SIGN_IDENTITY"'
+  pattern: '"BETTERLOGI_SIGN_IDENTITY"'

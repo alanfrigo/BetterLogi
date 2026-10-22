@@ -32,7 +32,7 @@ const FIRST_SPARKLE_RELEASE: Version = Version::new(0, 8, 14);
 
 #[derive(Parser)]
 pub(crate) struct Args {
-    /// The stapled `OpenLogi-<tag>-macos-<arch>.dmg`. The deltas and their
+    /// The stapled `BetterLogi-<tag>-macos-<arch>.dmg`. The deltas and their
     /// metadata are written next to it.
     #[arg(long)]
     dmg: PathBuf,
@@ -45,7 +45,11 @@ pub(crate) struct Args {
     #[arg(long, default_value_t = 3)]
     count: usize,
     /// Repository whose GitHub Releases hold the earlier DMGs.
-    #[arg(long, env = "GITHUB_REPOSITORY", default_value = "AprilNEA/OpenLogi")]
+    #[arg(
+        long,
+        env = "GITHUB_REPOSITORY",
+        default_value = "alanfrigo/BetterLogi"
+    )]
     repo: String,
 }
 
@@ -152,7 +156,7 @@ impl DeltaMaker<'_> {
     fn make(&self, base: &str) -> Result<PathBuf> {
         let dir = self.scratch.join(base);
         fs_err::create_dir_all(&dir)?;
-        let asset = format!("OpenLogi-{base}-macos-{}.dmg", self.arch.as_str());
+        let asset = format!("BetterLogi-{base}-macos-{}.dmg", self.arch.as_str());
         let (sh, repo) = (self.sh, self.repo);
         cmd!(
             sh,

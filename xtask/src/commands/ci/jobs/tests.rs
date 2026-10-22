@@ -41,10 +41,10 @@ fn workflow_commands(workflow: &str) -> String {
 
 #[test]
 fn wrapped_commands_join_under_either_line_ending() {
-    let joined = "cargo doc --workspace --exclude openlogi-ui";
+    let joined = "cargo doc --workspace --exclude betterlogi-ui";
     for wrapped in [
-        "cargo doc --workspace \\\n    --exclude openlogi-ui\n",
-        "cargo doc --workspace \\\r\n    --exclude openlogi-ui\r\n",
+        "cargo doc --workspace \\\n    --exclude betterlogi-ui\n",
+        "cargo doc --workspace \\\r\n    --exclude betterlogi-ui\r\n",
     ] {
         assert_eq!(workflow_commands(wrapped), joined);
     }
@@ -221,8 +221,8 @@ fn i18n_runs_portable_parity_before_desktop_resolution() {
     assert_eq!(
         commands,
         [
-            "cargo test -p openlogi-ui locale",
-            "cargo test -p openlogi-desktop i18n",
+            "cargo test -p betterlogi-ui locale",
+            "cargo test -p betterlogi-desktop i18n",
         ]
     );
 }

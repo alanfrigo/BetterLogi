@@ -11,12 +11,12 @@ use plist::{Dictionary, Value};
 use crate::support::release_tag::BuildVersion;
 use crate::support::update_feed::MACOS_MINIMUM_OS_VERSION;
 
-/// The scheme `openlogi://` deep links open the app with.
-const URL_SCHEME: &str = "openlogi";
+/// The scheme `betterlogi://` deep links open the app with.
+const URL_SCHEME: &str = "betterlogi";
 /// The URL type's `CFBundleURLName`: the bundle name, as cargo-bundle wrote it
 /// and the dev bundle's `Info.plist` declares it, so both register the type
 /// identically.
-const URL_TYPE_NAME: &str = "OpenLogi";
+const URL_TYPE_NAME: &str = "BetterLogi";
 
 /// Stamp `NSCameraUsageDescription` (cargo-bundle can't; matches the dev plist) so camera requests prompt instead of killing the app.
 pub(crate) fn stamp_privacy_usage_descriptions(app: &Path) -> Result<()> {
@@ -25,13 +25,13 @@ pub(crate) fn stamp_privacy_usage_descriptions(app: &Path) -> Result<()> {
         &app.join("Contents/Info.plist"),
         &[(
             "NSCameraUsageDescription",
-            "OpenLogi previews your Logitech webcam locally. Video never leaves your Mac.",
+            "BetterLogi previews your Logitech webcam locally. Video never leaves your Mac.",
         )],
     )
 }
 
 /// Stamp the Launch Services keys `Cargo.toml` cannot carry for every
-/// cargo-bundle: the minimum macOS version and the `openlogi://` URL type,
+/// cargo-bundle: the minimum macOS version and the `betterlogi://` URL type,
 /// each read back. cargo-bundle 0.11 reads them only as flat `osx_*` keys and
 /// silently ignores the `[package.metadata.bundle.osx]` table that 0.12
 /// requires, rejecting the flat keys, so `Cargo.toml` declares neither.

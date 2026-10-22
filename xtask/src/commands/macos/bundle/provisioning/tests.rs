@@ -5,7 +5,7 @@ use plist::{Date, Dictionary, Value};
 
 use super::{AgentProfile, EMBEDDED_PROFILE, HID_VIRTUAL_DEVICE};
 
-const AGENT: &str = "org.openlogi.agent";
+const AGENT: &str = "org.betterlogi.agent";
 const TEAM: &str = "ABCDE12345";
 const CERT: &[u8] = b"leaf certificate";
 
@@ -171,7 +171,7 @@ fn install_embeds_the_profile_and_writes_the_claim() {
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("agent.provisionprofile");
     fs_err::write(&source, b"signed profile bytes").unwrap();
-    let agent = dir.path().join("OpenLogi Agent.app");
+    let agent = dir.path().join("BetterLogi Agent.app");
     fs_err::create_dir_all(agent.join("Contents")).unwrap();
     let scratch = tempfile::tempdir().unwrap();
 

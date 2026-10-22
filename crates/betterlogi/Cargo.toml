@@ -1,0 +1,20 @@
+[package]
+name = "betterlogi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "BetterLogi command-line interface — a local-first companion for Logitech HID++ peripherals."
+keywords = ["logitech", "hidpp", "hid", "mouse", "cli"]
+categories = ["command-line-utilities", "hardware-support"]
+readme = "../../README.md"
+
+[dependencies]
+betterlogi-cli = { path = "../betterlogi-cli", version = "0.8.17" }
+anyhow = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[lints]
+workspace = true

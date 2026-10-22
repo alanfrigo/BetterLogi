@@ -7,19 +7,19 @@
 //! into the same channel. The channel's directory on the host is
 //! [`UpdateChannel`]'s, which the app reads its manifest from as well.
 
-use openlogi_core::update_feed::UpdateChannel;
+use betterlogi_core::update_feed::UpdateChannel;
 
 /// The channel every release publishes to.
 pub(crate) const CHANNEL: UpdateChannel = UpdateChannel::Stable;
 
 /// The variable the update host is read from, by every command that builds
 /// or publishes a feed on it.
-pub(crate) const BASE_URL_ENV: &str = "OPENLOGI_UPDATE_BASE_URL";
+pub(crate) const BASE_URL_ENV: &str = "BETTERLOGI_UPDATE_BASE_URL";
 
 /// The variable Sparkle's base64 EdDSA public key (`SUPublicEDKey`) is read
 /// from — what Sparkle's `generate_keys` prints. Not a secret. Packaging
 /// embeds it; the appcast step checks its signing key against it.
-pub(crate) const SPARKLE_PUBLIC_KEY_ENV: &str = "OPENLOGI_SPARKLE_PUBLIC_ED_KEY";
+pub(crate) const SPARKLE_PUBLIC_KEY_ENV: &str = "BETTERLOGI_SPARKLE_PUBLIC_ED_KEY";
 
 /// `LSMinimumSystemVersion` of the shipped bundle: `macos package` stamps it
 /// (`support::info_plist`), `actool` targets it, and every feed advertises it.

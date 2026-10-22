@@ -24,17 +24,19 @@ fn rejects_unpublished_path_dependency_of_published_package() {
     let metadata = json!({
         "packages": [
             package(
-                "openlogi-cli",
+                "betterlogi-cli",
                 &Value::Null,
-                &json!([dependency("openlogi-ipc", "^0.7.7", &Value::Null)]),
+                &json!([dependency("betterlogi-ipc", "^0.7.7", &Value::Null)]),
             ),
-            package("openlogi-ipc", &json!([]), &json!([])),
+            package("betterlogi-ipc", &json!([]), &json!([])),
         ],
     });
 
     let error = validate(&metadata.to_string()).unwrap_err().to_string();
 
-    assert!(error.contains("`openlogi-cli` depends on unpublished path package `openlogi-ipc`"));
+    assert!(
+        error.contains("`betterlogi-cli` depends on unpublished path package `betterlogi-ipc`")
+    );
 }
 
 #[test]
@@ -42,18 +44,18 @@ fn rejects_path_dependency_without_registry_version() {
     let metadata = json!({
         "packages": [
             package(
-                "openlogi-ipc",
+                "betterlogi-ipc",
                 &Value::Null,
-                &json!([dependency("openlogi-core", "*", &Value::Null)]),
+                &json!([dependency("betterlogi-core", "*", &Value::Null)]),
             ),
-            package("openlogi-core", &Value::Null, &json!([])),
+            package("betterlogi-core", &Value::Null, &json!([])),
         ],
     });
 
     let error = validate(&metadata.to_string()).unwrap_err().to_string();
 
     assert!(error.contains(
-        "`openlogi-ipc` path dependency on `openlogi-core` must declare a registry version"
+        "`betterlogi-ipc` path dependency on `betterlogi-core` must declare a registry version"
     ));
 }
 
@@ -62,17 +64,17 @@ fn accepts_publishable_normal_and_build_closure_and_ignores_dev_dependencies() {
     let metadata = json!({
         "packages": [
             package(
-                "openlogi-cli",
+                "betterlogi-cli",
                 &Value::Null,
                 &json!([
-                    dependency("openlogi-core", "^0.7.8", &Value::Null),
-                    dependency("openlogi-build", "^0.7.8", &json!("build")),
-                    dependency("openlogi-test", "*", &json!("dev")),
+                    dependency("betterlogi-core", "^0.7.8", &Value::Null),
+                    dependency("betterlogi-build", "^0.7.8", &json!("build")),
+                    dependency("betterlogi-test", "*", &json!("dev")),
                 ]),
             ),
-            package("openlogi-core", &Value::Null, &json!([])),
-            package("openlogi-build", &Value::Null, &json!([])),
-            package("openlogi-test", &json!([]), &json!([])),
+            package("betterlogi-core", &Value::Null, &json!([])),
+            package("betterlogi-build", &Value::Null, &json!([])),
+            package("betterlogi-test", &json!([]), &json!([])),
         ],
     });
 

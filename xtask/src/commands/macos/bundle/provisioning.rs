@@ -2,7 +2,7 @@
 //! virtual-device entitlement.
 //!
 //! The agent types shortcut keys through a virtual HID keyboard
-//! (`openlogi_inject::VirtualKeyboard`), and creating one needs the restricted
+//! (`betterlogi_inject::VirtualKeyboard`), and creating one needs the restricted
 //! `com.apple.developer.hid.virtual.device` entitlement. A restricted
 //! entitlement is valid only with a provisioning profile that grants it:
 //! AMFI kills a process that claims one without such a profile, before `main`
@@ -29,7 +29,7 @@ use super::identity::{Channel, Component};
 
 /// The Developer ID provisioning profile `macos package` embeds in the agent.
 pub(in crate::commands::macos) const AGENT_PROFILE_ENV: &str =
-    "OPENLOGI_AGENT_PROVISIONING_PROFILE";
+    "BETTERLOGI_AGENT_PROVISIONING_PROFILE";
 
 const APPLICATION_IDENTIFIER: &str = "com.apple.application-identifier";
 const TEAM_IDENTIFIER: &str = "com.apple.developer.team-identifier";

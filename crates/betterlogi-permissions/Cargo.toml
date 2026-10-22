@@ -1,0 +1,27 @@
+[package]
+name = "betterlogi-permissions"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Privacy-permission status and remediation deep links for BetterLogi (macOS TCC, Linux device-file access)."
+# Not publishable to crates.io: depends on the unpublished betterlogi-camera path.
+publish = false
+
+# Reading status never prompts, so this crate stays free of any UI toolkit —
+# whoever owns the resource raises its prompt (see the crate docs).
+[target.'cfg(target_os = "macos")'.dependencies]
+betterlogi-camera = { path = "../betterlogi-camera" }
+objc2 = { workspace = true }
+objc2-io-kit = { workspace = true, features = ["std", "hidsystem"] }
+opener = { workspace = true }
+tracing = { workspace = true }
+
+# Only for the Logitech vendor ID — `betterlogi-core` is pure types, no I/O.
+[target.'cfg(target_os = "linux")'.dependencies]
+betterlogi-core = { version = "0.8.17", path = "../betterlogi-core" }
+
+[lints]
+workspace = true

@@ -19,7 +19,7 @@ import unittest
 from pathlib import Path
 
 DEFAULT_HEADER = (
-    "# OpenLogi GUI translations. Managed by Crowdin; "
+    "# BetterLogi GUI translations. Managed by Crowdin; "
     "edit source text there when possible.\n"
     "_version = 1\n"
 )
@@ -183,7 +183,7 @@ def main(argv: list[str]) -> int:
 def catalog(entries: dict[str, dict[str, str]], *, comment: bool = False) -> str:
     lines = []
     if comment:
-        lines.append("# OpenLogi GUI translations.")
+        lines.append("# BetterLogi GUI translations.")
     lines.append("_version = 1")
     for table, values in entries.items():
         lines.extend(["", f"[{table}]"])
@@ -236,7 +236,7 @@ class MergeTests(unittest.TestCase):
             changed = merge_locales(before, after, en)
             text = (after / "de.toml").read_text(encoding="utf-8")
             self.assertEqual(changed, 1)
-            self.assertIn("# OpenLogi GUI translations.", text)
+            self.assertIn("# BetterLogi GUI translations.", text)
             self.assertIn("_version = 1", text)
             self.assertEqual(
                 parse_entries(text),

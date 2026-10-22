@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+BetterLogi forks OpenLogi 0.8.17. Entries below this section are OpenLogi's;
+their links point at the upstream repository.
+
+### Added
+
+- *(gui)* opt-in Easy-Switch mouse follow on the keyboard's Device tab.
+
+### Changed
+
+- Renamed to BetterLogi: crates, binaries, bundle and app IDs, config and data paths (`~/.config/betterlogi`).
+- *(gui)* updates come from the `alanfrigo/BetterLogi` GitHub releases.
+
+### Fixed
+
+- *(device)* a linked mouse that fails to answer is retried, so it follows the keyboard instead of staying behind.
+- *(overlay)* on Wayland the Actions Ring, lock-key and backlight indicators open as overlay layer surfaces instead of tiled windows (Hyprland, Omarchy).
+
 ## [0.8.17] - 2026-10-22
 
 ### Added

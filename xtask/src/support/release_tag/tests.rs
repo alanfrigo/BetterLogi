@@ -1,4 +1,4 @@
-use openlogi_core::update_feed::UpdateChannel;
+use betterlogi_core::update_feed::UpdateChannel;
 use semver::Version;
 
 use super::{BuildVersion, ReleaseTag};

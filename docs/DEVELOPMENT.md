@@ -1,6 +1,6 @@
-# Developing OpenLogi
+# Developing BetterLogi
 
-This document covers the local development workflow for OpenLogi. For end-user
+This document covers the local development workflow for BetterLogi. For end-user
 build instructions, see the [README](../README.md).
 
 ## Toolchain
@@ -9,7 +9,7 @@ build instructions, see the [README](../README.md).
 - macOS: Xcode 26+ with the optional **Metal Toolchain** component. The Metal
   Toolchain is what GPUI's `gpui_macos` build script compiles shaders with; the
   version floor is `actool`, which packaging uses to compile the app icon from
-  its Icon Composer document. `OPENLOGI_DEVELOPER_DIR` overrides which Xcode is
+  its Icon Composer document. `BETTERLOGI_DEVELOPER_DIR` overrides which Xcode is
   used when several are installed.
 - Linux: system libraries — on Debian/Ubuntu:
   `sudo apt-get install libudev-dev gcc g++ clang libfontconfig-dev libwayland-dev libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev pkg-config`
@@ -28,10 +28,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # macOS: full Xcode 26+ with the Metal Toolchain (not only Command Line Tools)
 # Linux: see system libraries under Toolchain above
 # optional helpers: brew install cmake create-dmg sccache
-git clone https://github.com/AprilNEA/OpenLogi
-cd OpenLogi
-cargo run -p openlogi --release -- list
-cargo run -p openlogi-desktop --release
+git clone https://github.com/alanfrigo/BetterLogi
+cd BetterLogi
+cargo run -p betterlogi --release -- list
+cargo run -p betterlogi-desktop --release
 ```
 
 If you use [direnv](https://direnv.net) without devenv installed, `.envrc`
@@ -45,12 +45,12 @@ nfpm on Linux, and the macOS packaging/env helpers GPUI needs
 (`create-dmg`, `DEVELOPER_DIR`, and `SDKROOT`). Tasks:
 
 ```sh
-devenv tasks run openlogi:gui      # run the desktop app
-devenv tasks run openlogi:check    # host-OS gate: fmt + clippy + tests + rustdoc
-devenv tasks run openlogi:ci       # every GitHub Actions CI job this host can reproduce
-devenv tasks run openlogi:dmg      # build the macOS DMG
-devenv tasks run openlogi:i18n-upload    # upload English source strings to Crowdin
-devenv tasks run openlogi:i18n-download  # download translations and run i18n tests
+devenv tasks run betterlogi:gui      # run the desktop app
+devenv tasks run betterlogi:check    # host-OS gate: fmt + clippy + tests + rustdoc
+devenv tasks run betterlogi:ci       # every GitHub Actions CI job this host can reproduce
+devenv tasks run betterlogi:dmg      # build the macOS DMG
+devenv tasks run betterlogi:i18n-upload    # upload English source strings to Crowdin
+devenv tasks run betterlogi:i18n-download  # download translations and run i18n tests
 ```
 
 After a `devenv.nix` change, reload direnv so the new env takes effect:
@@ -73,8 +73,8 @@ repository root:
 
 ```sh
 nix flake check ./packaging --all-systems --no-build  # evaluate every output
-nix build ./packaging#openlogi                        # build + test this host's package
-nix run ./packaging#openlogi -- list                  # run the packaged CLI
+nix build ./packaging#betterlogi                        # build + test this host's package
+nix run ./packaging#betterlogi -- list                  # run the packaged CLI
 ```
 
 The package expression and NixOS module live beside the other Linux packaging
@@ -83,21 +83,21 @@ Flake's pinned formatter. It takes no Flake argument, so run it from
 `packaging/`.
 
 The root `flake.nix` is a deprecated alias for existing
-`github:AprilNEA/OpenLogi` inputs. It has no committed lock file, prints a
+`github:alanfrigo/BetterLogi` inputs. It has no committed lock file, prints a
 warning on every evaluation, and will be removed in a later release.
 
 ### Dev app bundle (macOS)
 
 On macOS the desktop binary is launched from inside a throwaway
-`target/dev/OpenLogi.app` — a Cargo `runner` wired in `.cargo/config.toml`
+`target/dev/BetterLogi.app` — a Cargo `runner` wired in `.cargo/config.toml`
 (`.cargo/run-macos.sh`) that hands the build to `xtask macos dev-bundle`. This
-makes the dev build show as **OpenLogi Dev** in the menu bar and Dock, with the
+makes the dev build show as **BetterLogi Dev** in the menu bar and Dock, with the
 real app icon; a bare `cargo run` binary has no bundle, so macOS would otherwise
-fall back to the `openlogi-desktop` executable name and a generic icon. The
+fall back to the `betterlogi-desktop` executable name and a generic icon. The
 binary is hardlinked in (no copy) unless the bundle is being signed, and the
 icon is generated on demand. The runner is a transparent passthrough for
-everything else (the CLI, tests); set `OPENLOGI_DEV_BUNDLE=0` to launch the raw
-`openlogi-desktop` binary instead.
+everything else (the CLI, tests); set `BETTERLOGI_DEV_BUNDLE=0` to launch the raw
+`betterlogi-desktop` binary instead.
 
 Each run also stops the dev agent and overlay left behind by the previous one,
 then starts the freshly built agent and waits for its IPC socket before the
@@ -107,13 +107,13 @@ The helpers are launched through LaunchServices so they get their own TCC
 identity, which also means they are not children of the GUI: closing its
 window or pressing Ctrl-C ends only the GUI, and a surviving dev agent
 relaunches itself ~20 s later once its watcher notices the rewritten binary.
-Set `OPENLOGI_DEV_AGENT=0` to run against an agent you started yourself —
+Set `BETTERLOGI_DEV_AGENT=0` to run against an agent you started yourself —
 nothing is stopped, built, embedded, or started then.
 
 Packaged local dev bundles (`cargo run` and
 `cargo run -p xtask -- macos bundle`) use `-dev` bundle identifiers and the
-`openlogi-dev` XDG profile (`~/.config/openlogi-dev`,
-`~/.local/share/openlogi-dev`, and its own `agent.sock`). That keeps the dev
+`betterlogi-dev` XDG profile (`~/.config/betterlogi-dev`,
+`~/.local/share/betterlogi-dev`, and its own `agent.sock`). That keeps the dev
 GUI and agent from sharing the installed production app's Accessibility grant,
 single-instance lock, config, or IPC socket.
 
@@ -128,7 +128,7 @@ installed app's grants and config, which is exactly what releases
 To install the CLI binary on `PATH`:
 
 ```sh
-cargo install --path crates/openlogi
+cargo install --path crates/betterlogi
 ```
 
 ### macOS input-hook safety
@@ -137,26 +137,26 @@ The agent's input-hook watchdog gives CoreGraphics permission probes a 10-second
 
 ## Developing the GUI without hardware
 
-`openlogi-agent-mock` serves the real agent IPC contract from a scripted
+`betterlogi-agent-mock` serves the real agent IPC contract from a scripted
 in-memory inventory, so the desktop app can be developed with no Logitech
 device (or receiver) attached:
 
 ```sh
-cargo run -p openlogi-agent --bin openlogi-agent-mock   # then, in another terminal:
-OPENLOGI_DEV_AGENT=0 cargo run -p openlogi-desktop
+cargo run -p betterlogi-agent --bin betterlogi-agent-mock   # then, in another terminal:
+BETTERLOGI_DEV_AGENT=0 cargo run -p betterlogi-desktop
 ```
 
-The mock defaults itself to the `openlogi-dev` profile (as if `OPENLOGI_PROFILE=dev`
+The mock defaults itself to the `betterlogi-dev` profile (as if `BETTERLOGI_PROFILE=dev`
 were set), which is the profile the dev app bundle already uses — so it meets the
 dev GUI on the dev socket, and an installed *release* build, which is on the
 production profile, keeps running untouched. (A locally built bundle installed
 into `/Applications` carries `-dev` identifiers and therefore shares the dev
 profile: it and the mock contend for the same lock, and whichever starts second
-exits.) `OPENLOGI_DEV_AGENT=0` keeps the runner from building and embedding
-the real agent for the GUI to auto-spawn; add `OPENLOGI_ALLOW_EXTERNAL_AGENT=1`
+exits.) `BETTERLOGI_DEV_AGENT=0` keeps the runner from building and embedding
+the real agent for the GUI to auto-spawn; add `BETTERLOGI_ALLOW_EXTERNAL_AGENT=1`
 if your installed production agent is running, since the runner's guard against
 it predates the profile split and cannot know the dev GUI is on a separate
-socket. Pass `OPENLOGI_PROFILE=prod` to serve the production socket instead; the
+socket. Pass `BETTERLOGI_PROFILE=prod` to serve the production socket instead; the
 mock then contends for the production agent's single-instance lock and refuses
 to start while it is running.
 
@@ -177,7 +177,7 @@ Use the debug-only component gallery to review shared controls across light and
 dark themes and every supported interface scale without config, IPC, or hardware:
 
 ```sh
-OPENLOGI_COMPONENT_GALLERY=1 cargo run -p openlogi-desktop
+BETTERLOGI_COMPONENT_GALLERY=1 cargo run -p betterlogi-desktop
 ```
 
 Gallery mode opens one isolated window and bypasses the normal single-instance,
@@ -188,20 +188,20 @@ ignored by release builds.
 
 ```
 crates/
-  openlogi/         the `openlogi` binary — a thin wrapper over openlogi-cli
-  openlogi-core/    types, config (TOML), paths, button + action catalog — no HID, no async
-  openlogi-inject/  OS input synthesis: CGEvent, uinput/MPRIS, and SendInput
-  openlogi-hidpp/   vendored HID++ protocol crate (lib name `hidpp`)
-  openlogi-hid/     device discovery, HID++ reads/writes, and control capture over async-hid
-  openlogi-assets/  device-render registry schema + cached HTTP fetch from OpenLogi asset mirrors
-  openlogi-cli/     CLI implementation: command tree + `run()`, called by the `openlogi` binary
-  openlogi-agent-core/  shared orchestration + the agent/GUI IPC contract
-  openlogi-agent/   the `openlogi-agent` binary — background agent owning device I/O and the hook
-  openlogi-hook/    OS mouse hook: macOS CGEventTap, Linux evdev/uinput, Windows WH_MOUSE_LL
-  openlogi-ui/      presentation shared by the two GPUI processes: ring geometry/icons,
+  betterlogi/         the `betterlogi` binary — a thin wrapper over betterlogi-cli
+  betterlogi-core/    types, config (TOML), paths, button + action catalog — no HID, no async
+  betterlogi-inject/  OS input synthesis: CGEvent, uinput/MPRIS, and SendInput
+  betterlogi-hidpp/   vendored HID++ protocol crate (lib name `hidpp`)
+  betterlogi-hid/     device discovery, HID++ reads/writes, and control capture over async-hid
+  betterlogi-assets/  device-render registry schema + cached HTTP fetch from BetterLogi asset mirrors
+  betterlogi-cli/     CLI implementation: command tree + `run()`, called by the `betterlogi` binary
+  betterlogi-agent-core/  shared orchestration + the agent/GUI IPC contract
+  betterlogi-agent/   the `betterlogi-agent` binary — background agent owning device I/O and the hook
+  betterlogi-hook/    OS mouse hook: macOS CGEventTap, Linux evdev/uinput, Windows WH_MOUSE_LL
+  betterlogi-ui/      presentation shared by the two GPUI processes: ring geometry/icons,
                     the GPUI asset source, locale negotiation — gpui, no gpui-component
-  openlogi-desktop/     the `openlogi-desktop` binary — GPUI + gpui-component IPC client
-  openlogi-overlay/ the `openlogi-overlay` binary — the cursor-centred Actions Ring
+  betterlogi-desktop/     the `betterlogi-desktop` binary — GPUI + gpui-component IPC client
+  betterlogi-overlay/ the `betterlogi-overlay` binary — the cursor-centred Actions Ring
 ```
 
 ## Agent guidance
@@ -247,8 +247,8 @@ Verify loading in the client, not only the filesystem. In a fresh Claude Code
 session, use `/context` or an `InstructionsLoaded` hook to inspect loaded files:
 
 - Read `README.md`: Rust and GUI path rules should not load solely from that read.
-- Read `crates/openlogi-core/src/lib.rs`: the Rust rule should load, but not GUI.
-- Read `crates/openlogi-desktop/src/app.rs`: the GUI rule should now load too.
+- Read `crates/betterlogi-core/src/lib.rs`: the Rust rule should load, but not GUI.
+- Read `crates/betterlogi-desktop/src/app.rs`: the GUI rule should now load too.
 
 Follow [Claude's loading diagnostics](https://code.claude.com/docs/en/memory#troubleshoot-memory-issues)
 if those results differ. Filesystem checks and unchanged `paths` metadata are
@@ -263,7 +263,7 @@ and the Windows cross-lint the host-OS gate does not run:
 ```sh
 cargo xtask ci
 cargo xtask ci --list                        # job → command table
-devenv tasks run openlogi:ci                 # same, from devenv
+devenv tasks run betterlogi:ci                 # same, from devenv
 ```
 
 The runner sets `RUSTFLAGS=-D warnings` the way CI does. Jobs that need another
@@ -276,7 +276,7 @@ For structural searches and guard changes, use the [ast-grep skill](../.agents/s
 
 Before pushing, read [the local gate and push checklist](../.agents/rules/ci.md#local-gate-hard-stop-before-push--scale-it-to-the-affected-graph).
 That file owns tier selection, exact commands, and additional checks required by
-the diff. `devenv tasks run openlogi:check` runs the full host-OS tier, not the
+the diff. `devenv tasks run betterlogi:check` runs the full host-OS tier, not the
 whole CI pipeline. A Rust-bearing rebase or conflict resolution requires the
 full tier. Non-Rust changes use the applicable non-Rust checks.
 
@@ -327,28 +327,28 @@ thrash.
 ## Packaging the macOS DMG
 
 ```sh
-cargo run -p xtask -- macos package    # → target/release/OpenLogi.dmg
+cargo run -p xtask -- macos package    # → target/release/BetterLogi.dmg
 # Cross-compile a distribution DMG (aarch64 or x86_64):
 cargo run -p xtask -- macos package --target x86_64-apple-darwin
 ```
 
 Environment overrides:
 
-- `OPENLOGI_BUNDLE_ASSETS=1` — bundle every device render into the `.app` for a
+- `BETTERLOGI_BUNDLE_ASSETS=1` — bundle every device render into the `.app` for a
   fully offline build (default: fetched on demand at first launch).
-- `OPENLOGI_SIGN_IDENTITY=<identity>` — codesign the `.app` and `.dmg` with the
+- `BETTERLOGI_SIGN_IDENTITY=<identity>` — codesign the `.app` and `.dmg` with the
   given Developer ID.
-- `OPENLOGI_SPARKLE_PUBLIC_ED_KEY=<base64>` — embed Sparkle.framework and update
+- `BETTERLOGI_SPARKLE_PUBLIC_ED_KEY=<base64>` — embed Sparkle.framework and update
   through it (see Release updater publishing). Without it the bundle updates
   through the built-in engine.
-- `OPENLOGI_UPDATE_BASE_URL=<url>` — update host of the embedded Sparkle feed;
-  required with `OPENLOGI_SPARKLE_PUBLIC_ED_KEY`.
-- `OPENLOGI_DMG_BACKGROUND_URL=<url>` — override the branded DMG background
+- `BETTERLOGI_UPDATE_BASE_URL=<url>` — update host of the embedded Sparkle feed;
+  required with `BETTERLOGI_SPARKLE_PUBLIC_ED_KEY`.
+- `BETTERLOGI_DMG_BACKGROUND_URL=<url>` — override the branded DMG background
   TIFF URL (default: `https://assets.openlogi.org/dmg/dmg-background.tiff`).
 
 The local packaging command and release workflow both use the same branded DMG
 layout: a 760×480 background image in a 760×512 Finder window, with 128px icons
-positioned at `(212, 250)` for `OpenLogi.app` and `(548, 250)` for
+positioned at `(212, 250)` for `BetterLogi.app` and `(548, 250)` for
 `Applications`.
 
 ## Packaging Linux `.deb` / `.rpm` / `.pkg.tar.zst`
@@ -367,11 +367,11 @@ icon) are declared in `packaging/linux/nfpm.yaml`.
 `packaging/linux/install.sh` is a POSIX `/bin/sh` frontend for those release
 packages, not a second package lifecycle. Its online mode maps the host and
 package manager to the release naming contract
-`openlogi-v<version>-linux-<amd64|arm64>.<format>`, authenticates that file's
+`betterlogi-v<version>-linux-<amd64|arm64>.<format>`, authenticates that file's
 detached signature against its embedded minisign public key, verifies only that
 file's `SHA256SUMS` entry, and then delegates installation to apt, dnf, yum,
 zypper, rpm, or pacman. The embedded public key must stay in sync with
-`OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY`. The nFPM post-install script remains the
+`BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY`. The nFPM post-install script remains the
 owner of udev and desktop/icon cache reloads. The explicit `--from-source` mode
 preserves the checkout installer for the four local `target/release` binaries
 and shared resources.
@@ -402,16 +402,16 @@ This is an ownership snapshot, not download provenance or an update policy;
 the updater does not yet change behavior based on it.
 
 - **Homebrew:** matches the installed receipt and Caskroom app back-link to
-  the running bundle, distinguishing `openlogi` from `openlogi@latest`. It
+  the running bundle, distinguishing `betterlogi` from `betterlogi@latest`. It
   checks both standard prefixes, `HOMEBREW_PREFIX`, and prefixes discoverable
   from `PATH`, without executing brew. An undiscoverable custom prefix cannot
   be recognized. Other macOS bundles report `MacAppBundle`, not "DMG".
 - **Linux:** recognizes a resolved `/nix/store/` executable, or queries dpkg,
-  rpm, and pacman for ownership of the exact executable by `openlogi`.
+  rpm, and pacman for ownership of the exact executable by `betterlogi`.
   Package queries are read-only, with a two-second timeout per command.
 - **Windows:** the MSI writes its `InstallLocation` under
-  `HKCU\Software\OpenLogi`; only a matching executable is `WindowsMsi`.
-  The ZIP carries `openlogi-installation.json` next to `OpenLogi.exe` and is
+  `HKCU\Software\BetterLogi`; only a matching executable is `WindowsMsi`.
+  The ZIP carries `betterlogi-installation.json` next to `BetterLogi.exe` and is
   `WindowsPortable`. A matching MSI registration takes precedence.
 - **Unknown:** unmarked Windows releases predating these markers, bare
   source/manual installs, or otherwise inconclusive ownership. Missing
@@ -419,215 +419,61 @@ the updater does not yet change behavior based on it.
 
 ## Release updater publishing
 
-Tagged releases attach artifacts and `SHA256SUMS` to GitHub Releases for manual
-downloads. When both Linux build legs succeed, the release workflow copies
-`packaging/linux/install.sh` to `dist/install.sh`; that exact file is listed in
-`SHA256SUMS`, signed as `install.sh.minisig`, and attached as a release asset.
-Partial releases without a complete Linux package set omit the installer. The
-workflow also publishes the artifacts to Cloudflare R2 and writes a static
-updater manifest at:
+Updates come from this repository's GitHub Releases
+(`alanfrigo/BetterLogi`). A tagged release attaches the installers,
+`SHA256SUMS`, a minisign signature for every artifact, the built-in engine's
+manifest `latest.json`, and the macOS Sparkle feeds `appcast-arm64.xml` and
+`appcast-x86_64.xml`. When both Linux build legs succeed, the workflow also
+attaches `packaging/linux/install.sh` as `install.sh`.
+
+The app embeds the update host at build time via `BETTERLOGI_UPDATE_BASE_URL`
+(unset or empty means `https://github.com/alanfrigo/BetterLogi/releases`; the
+release workflows set it to the building repository's releases). Every feed is
+read from the newest release:
 
 ```text
-${OPENLOGI_UPDATE_BASE_URL}/channels/stable/latest.json
+https://github.com/alanfrigo/BetterLogi/releases/latest/download/latest.json
+https://github.com/alanfrigo/BetterLogi/releases/latest/download/appcast-arm64.xml
+https://github.com/alanfrigo/BetterLogi/releases/latest/download/appcast-x86_64.xml
 ```
 
-The app embeds the update host at build time via `OPENLOGI_UPDATE_BASE_URL`
-(unset or empty means `https://updates.openlogi.org`) and derives the manifest
-URL from it with `openlogi_core::update_feed`, the module that owns the
-channel layout on the host. Release builds also embed `OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY`
-and run with `Verification::Strict`: an update is installed only if the manifest
-asset carries a minisign signature that verifies against that key, plus a
-matching SHA-256. A build without the key embedded (local/dev) fails closed —
-the update check errors rather than installing an unverified artifact.
+and every download points at `releases/download/<tag>/<file>`.
+`betterlogi_core::update_feed` owns that layout. GitHub's `latest` skips
+pre-releases, so a build that follows `beta` reads the newest stable release.
 
-The app follows one update channel per launch, which
-`UpdateChannel::followed` decides. A channel picked in Settings → Updates
-(`update_channel` in `config.toml`) wins. Without one, a pre-release such as
-`0.8.17-beta.12` follows `beta` and a final release follows `stable`. The
-engine reads `${OPENLOGI_UPDATE_BASE_URL}/channels/<channel>/latest.json`.
-Sparkle keeps reading the stable appcasts below and, on `beta`, also offers
-their items tagged `<sparkle:channel>beta</sparkle:channel>`. Nothing publishes
-to `beta` yet: until the release workflow writes `/channels/beta/latest.json`,
-an engine build that follows `beta` finds no manifest.
+Release builds embed `BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY` and run with
+`Verification::Strict`: an update is installed only if its asset carries a
+minisign signature that verifies against that key, plus a matching SHA-256. A
+build without the key (local/dev) fails closed — the check errors rather than
+installing an unverified artifact.
 
-### macOS: Sparkle
+The signed macOS bundle embeds [Sparkle](https://sparkle-project.org). Each
+architecture reads its own appcast, whose single item is that architecture's
+notarized DMG with an EdDSA signature; the bundle trusts only its
+`SUPublicEDKey`. Updates stay opt-in: Sparkle never schedules a check, the app
+runs one launch check itself when **Check for updates** is on.
 
-The signed macOS release bundle embeds
-[Sparkle](https://sparkle-project.org) and updates through it instead
-(`platform::updater` in `openlogi-desktop`). Each architecture ships its own
-DMG, so each reads its own feed:
+Set these repository secrets (Settings → Secrets and variables → Actions):
 
-```text
-${OPENLOGI_UPDATE_BASE_URL}/channels/stable/appcast-arm64.xml
-${OPENLOGI_UPDATE_BASE_URL}/channels/stable/appcast-x86_64.xml
-```
+- `BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY` — base64 minisign public key, embedded
+  in the app. It must equal `MINISIGN_PUBLIC_KEY` in `packaging/linux/install.sh`.
+- `BETTERLOGI_UPDATE_MINISIGN_SECRET_KEY` — the passwordless minisign secret key
+  file, base64-encoded (`base64 < minisign.key`).
+- `BETTERLOGI_SPARKLE_PUBLIC_ED_KEY` / `BETTERLOGI_SPARKLE_PRIVATE_ED_KEY` —
+  Sparkle's EdDSA key pair from `generate_keys`.
 
-Each feed carries one item: that architecture's notarized, stapled DMG with an
-EdDSA (`sparkle:edSignature`) signature over the exact file, and the release
-notes as Markdown. The bundle trusts only the key in its `SUPublicEDKey`, and
-`SUVerifyUpdateBeforeExtraction` makes Sparkle check that signature before it
-unpacks anything.
+Generate the minisign pair with `minisign -G -W -p minisign.pub -s minisign.key`.
+macOS and Windows code signing still read the Apple and Azure items through
+1Password (`build.yml`); without them the build legs produce unsigned
+artifacts.
 
-Updates stay opt-in. The bundle ships `SUEnableAutomaticChecks = NO`, so
-Sparkle never schedules a check or asks to; the app runs the one launch check
-itself when **Check for updates** is on, without a window. With **Automatic
-updates** also on, a found update downloads in the background and installs on
-quit or through **Restart to Update**. "Check for Updates…" opens Sparkle's
-update window. A bundle without Sparkle (Windows, Linux, local builds) and a
-Sparkle that fails to load fall back to the engine and `latest.json`.
-
-`latest.json` and the DMG minisigs keep being published: bundles from before
-Sparkle read only that manifest, and they update into a Sparkle bundle through
-it.
-
-Configure the R2/update settings in one 1Password item referenced by the GitHub
-secret `OP_R2_SECRET_ITEM`. The item must contain:
-
-- `OPENLOGI_UPDATE_BASE_URL` — public HTTPS base URL, for example
-  `https://updates.openlogi.org`.
-- `OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY` — base64 minisign public key embedded in
-  the app and used to verify updater artifacts.
-- `OPENLOGI_UPDATE_MINISIGN_SECRET_KEY` — the passwordless minisign secret key
-  file, **base64-encoded** (`base64 < minisign.key`), used only in the release
-  publish job to sign release artifacts before `latest.json` is generated. It
-  is stored base64 (not raw) so its two lines survive 1Password's paste
-  handling; the workflow decodes it, mirroring the GitHub App key.
-- `OPENLOGI_SPARKLE_PUBLIC_ED_KEY` — Sparkle's base64 EdDSA public key, stamped
-  into the macOS bundle as `SUPublicEDKey`.
-- `OPENLOGI_SPARKLE_PRIVATE_ED_KEY` — the matching base64 private key (the
-  32-byte seed), used only in the publish job to sign the DMGs into the
-  appcasts. `release appcast` refuses a private key that does not belong to the
-  public key above.
-- `CLOUDFLARE_R2_ACCOUNT_ID` — Cloudflare account ID used for the S3 endpoint.
-- `CLOUDFLARE_R2_BUCKET` — bucket name.
-- `CLOUDFLARE_R2_ACCESS_KEY_ID` — R2 S3 access key.
-- `CLOUDFLARE_R2_SECRET_ACCESS_KEY` — R2 S3 secret key.
-
-The workflow uploads immutable artifacts under `/releases/<tag>/`. Only the
-channel files are mutable: `latest.json` and the two appcasts under
-`/channels/stable/`, and `latest.json` under `/channels/beta/`. They are
-uploaded after the artifacts they point at, and only a stable release moves
-them. Until beta releases publish their own, a stable release writes the same
-`latest.json` to both channels, so the newest release on the beta channel is
-the newest stable one. Publish jobs run one at a time (the `release-publish`
-concurrency group), so two tags never interleave these writes. Up to 100
-waiting publish jobs queue (`queue: max`) instead of replacing each other, and
-start in the order they began to wait. The queue only keeps writes apart: it
-does not order releases by version, and it does not make a re-run safe. Never
-re-run publish for a tag whose release has published, even partly. The release
-is immutable, so the re-run fails, after it has already overwritten that tag's
-R2 files and pointed the channel files at that tag. A missing artifact ships
-with the next tag.
-
-Generate the Sparkle key pair once, with the `generate_keys` tool from the
-[Sparkle release](https://github.com/sparkle-project/Sparkle/releases) xtask
-embeds:
-
-```sh
-./bin/generate_keys --account openlogi         # prints the public key
-./bin/generate_keys --account openlogi -x sparkle-private.key
-# store the file's contents as OPENLOGI_SPARKLE_PRIVATE_ED_KEY, then delete it
-```
-
-The key cannot be replaced casually: every installed bundle trusts only the one
-it shipped with. Rotating it means shipping a bundle with the new key that is
-still signed with the old one, or relying on Sparkle's fallback to the DMG's
-Developer ID signature.
-
-After a complete Linux stable release is published, the workflow dispatches
-`publish-openlogi-installer` with the tag to `openlogi-org/get`. That repository
-downloads `install.sh`, `install.sh.minisig`, and `SHA256SUMS` from the published
-GitHub Release, verifies both the exact checksum and minisign signature, and
-commits immutable versioned files plus the latest stable aliases served by
-Cloudflare Pages at `get.openlogi.org`. It mirrors no native package binaries.
-The dispatch uses the same 1Password-backed GitHub App as the Homebrew update;
-the App must be installed for the `openlogi-org/get` repository.
-
-The manifest is generated by the workspace `xtask` helper:
-
-```sh
-cargo run -p xtask -- release latest-json \
-  --dist dist \
-  --tag v0.2.0 \
-  --base-url https://updates.openlogi.org \
-  --output dist/latest.json
-```
-
-and so are the appcasts, after the DMGs are stapled (stapling rewrites them).
-The private key is read only from the environment:
-
-```sh
-OPENLOGI_SPARKLE_PRIVATE_ED_KEY=… cargo run -p xtask -- release appcast \
-  --dist dist \
-  --tag v0.2.0 \
-  --base-url https://updates.openlogi.org \
-  --public-key "$OPENLOGI_SPARKLE_PUBLIC_ED_KEY" \
-  --release-notes .release/RELEASE_NOTES.md \
-  --output-dir .release/appcast
-```
-
-The stable feed takes `MAJOR.MINOR.PATCH` releases only: Sparkle's version
-comparator stops at the first `-`, so it would read `1.2.0-rc.1` as `1.2.0`.
-
-Each feed also offers Sparkle deltas from the three newest earlier releases
-that embed Sparkle (0.8.14 and later). The macOS build leg makes them right
-after it staples the DMG, because Sparkle's `BinaryDelta` runs only on macOS:
-
-```sh
-GH_TOKEN=… cargo run -p xtask -- release sparkle-deltas \
-  --dmg dist/OpenLogi-v0.2.0-macos-arm64.dmg \
-  --tag v0.2.0
-```
-
-It downloads each earlier DMG from the GitHub Release, applies the new delta
-to that app, and keeps the delta only when the result matches the new app file
-for file. It writes `<dmg>.from-<version>.sparkle-delta` and a `.json` next to
-it; `release appcast` reads that metadata and signs the delta. A delta that
-cannot be made is a warning, and the feed still offers the full DMG. The deltas
-go to `/releases/<tag>/` with the DMGs; their metadata stays out of R2.
-
-### Release versions
-
-Every tag run starts with `cargo xtask release version`. It reads the tag and
-checks the workspace version of the tagged commit. A stable tag is on
-release-plz's version bump, so the workspace version must be the tag's
-version. A beta tags `master` between releases without a version bump, so the
-workspace version must be the stable release the beta follows. The command
-prints three values for the build:
-
-| Output | Stable `v0.8.17` | Beta `v0.8.17-beta.12` |
-| --- | --- | --- |
-| `channel` | `stable` | `beta` |
-| `version` | `0.8.17` | `0.8.17-beta.12` |
-| `build_version` | `0.8.17` | `0.8.16.12` |
-
-Sparkle and Windows Installer order releases by `build_version`. The macOS
-bundles carry it as `CFBundleVersion`, and the MSI as its `ProductVersion`. A
-beta's build version is the stable release before it plus a fourth field, the
-beta number. So it ranks above that release and below the next one. Windows
-Installer ignores the fourth field, so the MSI allows same-version upgrades.
-
-The stable release before a beta is the newest stable tag reachable from the
-beta tag, and the beta's version must be above it. The beta number is the
-count of commits from that stable release to the beta
-(`git rev-list --count`), so it is at least 1 and grows with `master`.
-`release version` fails if the tag's number is a different count.
-
-Only `vX.Y.Z` and `vX.Y.Z-beta.N` are release tags.
-`xtask/src/support/release_tag.rs` owns the syntax and the encoding.
-
-The publish side follows the channel. A beta becomes a GitHub prerelease and
-never the latest release. It leaves the channel files, the installer site and
-the Homebrew cask as they are. A stable release's notes compare with the
-previous stable tag, so they cover its betas too; a beta's notes compare with
-the tag just before it. `cargo xtask release version` picks that tag and prints
-it as `previous_tag`; the release-notes generator only uses it. The release
-workflow still stops a beta tag before the build, until the beta feeds exist.
+Never re-run publish for a tag whose release has published, even partly: the
+release is immutable. A missing artifact ships with the next tag.
 
 ## Crowdin translation sync
 
 `.github/workflows/crowdin.yml` syncs GUI locales with
-[Crowdin](https://crowdin.com/project/openlogi) and opens a `crowdin/i18n` PR
+[Crowdin](https://crowdin.com/project/betterlogi) and opens a `crowdin/i18n` PR
 when a **real** translation value improved — nightly, and on master pushes that
 touch English sources (`en.toml`), `.config/crowdin.yml`, the Crowdin workflow,
 the merge script under `.github/scripts/i18n/`, or the shared GitHub App token
@@ -672,7 +518,7 @@ contain:
 - `CROWDIN_PERSONAL_TOKEN` — a Crowdin API token with access to the project.
 
 Grant the token only these scopes and restrict its granular access to the
-OpenLogi project:
+BetterLogi project:
 
 - Projects (List, Get, Create, Edit) — Read.
 - Translation Status — Read Only.
@@ -690,7 +536,7 @@ so git push does not inherit the read-only Actions credential.
 Local helpers (with Crowdin credentials configured):
 
 ```sh
-devenv tasks run openlogi:i18n-upload    # en.toml sources + per-language translations
-devenv tasks run openlogi:i18n-download  # download + merge + i18n tests
+devenv tasks run betterlogi:i18n-upload    # en.toml sources + per-language translations
+devenv tasks run betterlogi:i18n-download  # download + merge + i18n tests
 python3 .github/scripts/i18n/merge_crowdin_download.py --self-test
 ```
