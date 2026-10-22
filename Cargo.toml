@@ -1,51 +1,51 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/openlogi",
-    "crates/openlogi-core",
-    "crates/openlogi-device-registry",
-    "crates/openlogi-fixture",
-    "crates/openlogi-inject",
-    "crates/openlogi-hidpp",
-    "crates/openlogi-hidpp-derive",
-    "crates/openlogi-hid",
-    "crates/openlogi-device",
-    "crates/openlogi-camera",
-    "crates/openlogi-permissions",
-    "crates/openlogi-assets",
-    "crates/openlogi-cli",
-    "crates/openlogi-ipc",
-    "crates/openlogi-agent-core",
-    "crates/openlogi-agent",
-    "crates/openlogi-desktop",
-    "crates/openlogi-ui",
-    "crates/openlogi-overlay",
-    "crates/openlogi-hook",
+    "crates/betterlogi",
+    "crates/betterlogi-core",
+    "crates/betterlogi-device-registry",
+    "crates/betterlogi-fixture",
+    "crates/betterlogi-inject",
+    "crates/betterlogi-hidpp",
+    "crates/betterlogi-hidpp-derive",
+    "crates/betterlogi-hid",
+    "crates/betterlogi-device",
+    "crates/betterlogi-camera",
+    "crates/betterlogi-permissions",
+    "crates/betterlogi-assets",
+    "crates/betterlogi-cli",
+    "crates/betterlogi-ipc",
+    "crates/betterlogi-agent-core",
+    "crates/betterlogi-agent",
+    "crates/betterlogi-desktop",
+    "crates/betterlogi-ui",
+    "crates/betterlogi-overlay",
+    "crates/betterlogi-hook",
     "xtask",
 ]
 # The CLI used to be the root package, so a bare `cargo build` / `cargo run`
 # built it alone. Keep that: without this, a virtual workspace defaults to every
 # member, dragging GPUI's Metal shader toolchain into the simplest build there is.
-default-members = ["crates/openlogi"]
+default-members = ["crates/betterlogi"]
 
 [workspace.package]
 version = "0.8.17"
 edition = "2024"
-# Tracks current stable rather than trailing it. OpenLogi ships as an app —
+# Tracks current stable rather than trailing it. BetterLogi ships as an app —
 # prebuilt installers, and no crate here has an external reverse dependency —
 # so a floor below stable buys nobody compatibility and only costs us APIs.
 # Raise this freely the day a release lands something worth using; the `msrv`
 # CI matrix keeps the number honest for `cargo install`.
 rust-version = "1.99"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/AprilNEA/OpenLogi"
-authors = ["AprilNEA <dev@aprilnea.me>"]
+repository = "https://github.com/alanfrigo/BetterLogi"
+authors = ["Alan Frigo <alanfrigo@outlook.com>", "AprilNEA <dev@aprilnea.me>"]
 description = "Lightweight, local-first alternative to Logitech Options+ for HID++ devices"
 
 [workspace.dependencies]
-hidpp = { package = "openlogi-hidpp", path = "crates/openlogi-hidpp", version = "0.8.17" }
-openlogi-device-registry = { path = "crates/openlogi-device-registry", version = "0.8.17" }
-openlogi-fixture = { path = "crates/openlogi-fixture", version = "0.8.17" }
+hidpp = { package = "betterlogi-hidpp", path = "crates/betterlogi-hidpp", version = "0.8.17" }
+betterlogi-device-registry = { path = "crates/betterlogi-device-registry", version = "0.8.17" }
+betterlogi-fixture = { path = "crates/betterlogi-fixture", version = "0.8.17" }
 async-hid = { package = "openlogi-async-hid", version = "=0.5.3-openlogi.1" }
 interprocess = { version = "2", features = ["tokio"] }
 # The agent <-> GUI RPC layer itself, over the `interprocess` transport above.

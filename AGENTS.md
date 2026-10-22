@@ -1,6 +1,6 @@
-# OpenLogi — Agent Guide
+# BetterLogi — Agent Guide
 
-OpenLogi is a native, local-first alternative to Logitech Options+ written in Rust:
+BetterLogi is a native, local-first alternative to Logitech Options+ written in Rust:
 button remapping, DPI, SmartShift, and per-app profiles for Logitech HID++ devices
 (Bolt/Unifying receiver, Bluetooth-direct, wired) — no account, no telemetry, plain-TOML
 config. macOS and Linux are first-class; Windows is a young but shipping port.
@@ -16,40 +16,40 @@ touching an area.
 
 For runtime HID and input state, the long-running **GUI** and **overlay** are pure IPC
 clients; the **agent** owns the input hook and HID I/O. The CLI is a diagnostic
-exception: `openlogi list` prefers a compatible agent snapshot and falls back to
+exception: `betterlogi list` prefers a compatible agent snapshot and falls back to
 direct enumeration when none is available, while hardware-diagnostic subcommands
 access devices directly.
 
 | Crate | Role |
 |---|---|
-| `crates/openlogi` | The CLI binary — thin wrapper over `openlogi-cli` |
-| `crates/openlogi-core` | Pure types: TOML config, device model, action catalog, locale negotiation. No I/O, no async (feature-gated host plumbing: `fs`, `locale`, the `worker` thread, and the shared `logging` setup) |
-| `crates/openlogi-device-registry` | Pure hardware identity registry: receiver protocols and standalone-device driver metadata |
-| `crates/openlogi-hidpp` | Hard fork of the `hidpp` protocol crate (**lib name `hidpp`**, 0BSD) |
-| `crates/openlogi-hidpp-derive` | Private derive macro for `openlogi-hidpp` feature boilerplate |
-| `crates/openlogi-fixture` | Host-free fixture schemas, synthetic identity policy, canonical semantic data, and privacy/relationship verification |
-| `crates/openlogi-device` | The HID++ device layer: enumeration, probing, writes, sessions, pairing. Knows no host — expressed against `HidBackend` |
-| `crates/openlogi-hid` | That layer wired to this host: `async-hid` transport, macOS Input Monitoring, the on-disk probe cache |
-| `crates/openlogi-camera` | Cross-platform Logitech UVC enumeration, capture, controls, and Camera-permission APIs |
-| `crates/openlogi-assets` | Device-render registry + cached fetch from OpenLogi asset mirrors |
-| `crates/openlogi-cli` | CLI dispatch: agent-backed inventory when available, plus direct hardware diagnostics |
-| `crates/openlogi-hook` | OS input capture: CGEventTap / evdev+uinput / WH_MOUSE_LL |
-| `crates/openlogi-inject` | OS input synthesis: CGEvent + virtual HID keyboard / uinput+MPRIS / SendInput |
-| `crates/openlogi-agent-core` | Shared agent orchestration: hook runtime, HID++ writes, DPI cycle, Actions Ring session state |
-| `crates/openlogi-ipc` | The tarpc IPC contract (`src/ipc.rs`) + its local-socket transport, shared by the agent and its clients |
-| `crates/openlogi-agent` | The `openlogi-agent` binary — runtime HID/input server |
-| `crates/openlogi-permissions` | Privacy-permission status + System-Settings deep links: macOS TCC reads, Linux device-file probes. Reads only — never prompts |
-| `crates/openlogi-ui` | Presentation shared by the two GPUI processes: action icons, colors, the GPUI asset source, and locale catalogs. Currently depends on `gpui`, not `gpui-component` |
-| `crates/openlogi-desktop` | GPUI + gpui-component desktop app — polls the agent, no HID/input I/O |
-| `crates/openlogi-overlay` | The `openlogi-overlay` binary — cursor-centred Actions Ring, a pure IPC client |
+| `crates/betterlogi` | The CLI binary — thin wrapper over `betterlogi-cli` |
+| `crates/betterlogi-core` | Pure types: TOML config, device model, action catalog, locale negotiation. No I/O, no async (feature-gated host plumbing: `fs`, `locale`, the `worker` thread, and the shared `logging` setup) |
+| `crates/betterlogi-device-registry` | Pure hardware identity registry: receiver protocols and standalone-device driver metadata |
+| `crates/betterlogi-hidpp` | Hard fork of the `hidpp` protocol crate (**lib name `hidpp`**, 0BSD) |
+| `crates/betterlogi-hidpp-derive` | Private derive macro for `betterlogi-hidpp` feature boilerplate |
+| `crates/betterlogi-fixture` | Host-free fixture schemas, synthetic identity policy, canonical semantic data, and privacy/relationship verification |
+| `crates/betterlogi-device` | The HID++ device layer: enumeration, probing, writes, sessions, pairing. Knows no host — expressed against `HidBackend` |
+| `crates/betterlogi-hid` | That layer wired to this host: `async-hid` transport, macOS Input Monitoring, the on-disk probe cache |
+| `crates/betterlogi-camera` | Cross-platform Logitech UVC enumeration, capture, controls, and Camera-permission APIs |
+| `crates/betterlogi-assets` | Device-render registry + cached fetch from BetterLogi asset mirrors |
+| `crates/betterlogi-cli` | CLI dispatch: agent-backed inventory when available, plus direct hardware diagnostics |
+| `crates/betterlogi-hook` | OS input capture: CGEventTap / evdev+uinput / WH_MOUSE_LL |
+| `crates/betterlogi-inject` | OS input synthesis: CGEvent + virtual HID keyboard / uinput+MPRIS / SendInput |
+| `crates/betterlogi-agent-core` | Shared agent orchestration: hook runtime, HID++ writes, DPI cycle, Actions Ring session state |
+| `crates/betterlogi-ipc` | The tarpc IPC contract (`src/ipc.rs`) + its local-socket transport, shared by the agent and its clients |
+| `crates/betterlogi-agent` | The `betterlogi-agent` binary — runtime HID/input server |
+| `crates/betterlogi-permissions` | Privacy-permission status + System-Settings deep links: macOS TCC reads, Linux device-file probes. Reads only — never prompts |
+| `crates/betterlogi-ui` | Presentation shared by the two GPUI processes: action icons, colors, the GPUI asset source, and locale catalogs. Currently depends on `gpui`, not `gpui-component` |
+| `crates/betterlogi-desktop` | GPUI + gpui-component desktop app — polls the agent, no HID/input I/O |
+| `crates/betterlogi-overlay` | The `betterlogi-overlay` binary — cursor-centred Actions Ring, a pure IPC client |
 | `xtask` | `cargo xtask` maintenance: bundling, packaging, release manifest |
 
 - IPC clients ↔ agent speak tarpc/bincode over an `interprocess` local socket. The wire
-  format is versioned and **append-only** — read `crates/openlogi-ipc/AGENTS.md` before
+  format is versioned and **append-only** — read `crates/betterlogi-ipc/AGENTS.md` before
   touching it.
 - Three processes ship in the bundle — GUI, agent, overlay — and the overlay is a
-  *sibling* of the GUI, not a part of it: it links `openlogi-ui`, never
-  `openlogi-desktop`. Anything both need goes in `openlogi-ui`, and every dependency
+  *sibling* of the GUI, not a part of it: it links `betterlogi-ui`, never
+  `betterlogi-desktop`. Anything both need goes in `betterlogi-ui`, and every dependency
   added there lands in the overlay too (`.agents/rules/gui.md` has the rule).
 - Platform code is cfg-gated per crate (`[target.'cfg(target_os = …)'.dependencies]`).
   `.agents/rules/objc-ffi.md` is the contract for the workspace's macOS native FFI and
@@ -67,7 +67,7 @@ access devices directly.
 - A decision every consumer must make the same way — a handshake step, a version
   policy, a deadline, a threshold, an encoding — has exactly one owner, and the owner
   exports the *decision*, not the ingredients. Clients call
-  `openlogi_ipc::client::connect_as(kind)` and match `ConnectError::Skew`; they never
+  `betterlogi_ipc::client::connect_as(kind)` and match `ConnectError::Skew`; they never
   see a raw version number to compare. Whatever consumers must not recombine stays
   private, or leaves the public surface with the consolidation.
 - The second copy is the trigger, not the third. About to write a decision that already
@@ -90,9 +90,9 @@ inside the shell — run from the repo root (or `direnv exec . …`), including
 git (the hooks need cargo):
 
 ```sh
-cargo check -p openlogi-core
+cargo check -p betterlogi-core
 # when cargo is only inside devenv:
-direnv exec . cargo check -p openlogi-core
+direnv exec . cargo check -p betterlogi-core
 direnv exec . git commit …
 ```
 
@@ -130,8 +130,8 @@ A skipped job is **not** a pass. These procedures do not authorize a push.
 
 ### Running the app
 
-- Dev-run with `cargo run -p openlogi-desktop` — a cargo runner wraps the build into
-  `target/dev/OpenLogi.app` with the same identity, helper and plist tables packaging
+- Dev-run with `cargo run -p betterlogi-desktop` — a cargo runner wraps the build into
+  `target/dev/BetterLogi.app` with the same identity, helper and plist tables packaging
   uses. The macOS GUI build needs full Xcode for GPUI's Metal shaders; devenv sets the
   env when present (`direnv reload` if the shader compile fails there).
 - `cargo build` does NOT refresh that bundle, and a second instance exits on the
@@ -142,8 +142,8 @@ A skipped job is **not** a pass. These procedures do not authorize a push.
   and a surviving agent relaunches itself ~20 s later — then starts the freshly
   built agent and waits for its socket, so the GUI's first IPC connect succeeds
   instead of exercising the production spawn-on-unreachable fallback.
-  `OPENLOGI_DEV_AGENT=0` opts out of all of it.
-- No hardware attached? `cargo run -p openlogi-agent --bin openlogi-agent-mock` serves
+  `BETTERLOGI_DEV_AGENT=0` opts out of all of it.
+- No hardware attached? `cargo run -p betterlogi-agent --bin betterlogi-agent-mock` serves
   a scripted inventory over the dev IPC socket, so the GUI runs unmodified and the
   production app stays untouched.
 - Mechanics, dev profiles, and the mock's scope: `docs/DEVELOPMENT.md`.
@@ -220,14 +220,14 @@ client-loading checks, including Windows symlink requirements.
 | reproducing CI jobs locally (every `ci.yml` job → command) | [.agents/rules/ci.md](.agents/rules/ci.md) |
 | `**/.ast-grep/**`, `sgconfig.yml` (the single-source-of-truth guards) | [.agents/rules/ci.md](.agents/rules/ci.md) |
 | any `*.rs` / `Cargo.toml` (workspace Rust standards) | [.agents/rules/rust.md](.agents/rules/rust.md) |
-| `crates/openlogi-desktop/**`, `crates/openlogi-ui/**`, `crates/openlogi-overlay/**` (GPUI) | [.agents/rules/gui.md](.agents/rules/gui.md) |
-| `crates/openlogi-desktop/**` (that crate's own contract and map) | `crates/openlogi-desktop/AGENTS.md` |
+| `crates/betterlogi-desktop/**`, `crates/betterlogi-ui/**`, `crates/betterlogi-overlay/**` (GPUI) | [.agents/rules/gui.md](.agents/rules/gui.md) |
+| `crates/betterlogi-desktop/**` (that crate's own contract and map) | `crates/betterlogi-desktop/AGENTS.md` |
 | locale catalogs/negotiation and each binary's `rust_i18n::i18n!` wiring | [.agents/rules/i18n.md](.agents/rules/i18n.md) |
-| `crates/openlogi-ipc/**`, plus every crate whose serde types ride the wire (`openlogi-agent-core`, `openlogi-agent`, `openlogi-core`, `openlogi-hid`) | `crates/openlogi-ipc/AGENTS.md` |
+| `crates/betterlogi-ipc/**`, plus every crate whose serde types ride the wire (`betterlogi-agent-core`, `betterlogi-agent`, `betterlogi-core`, `betterlogi-hid`) | `crates/betterlogi-ipc/AGENTS.md` |
 | cfg-gated platform code, including hook/inject/hid, camera, and agent autostart/resume | [.agents/rules/cross-platform.md](.agents/rules/cross-platform.md) |
-| `crates/openlogi-hidpp/**` (hard fork of `hidpp`) | `crates/openlogi-hidpp/AGENTS.md` |
-| `crates/openlogi-device/**`, `crates/openlogi-hid/**` (the HID++ layer seam) | `crates/openlogi-device/AGENTS.md` |
-| `crates/openlogi-hook/**` (event taps) | `crates/openlogi-hook/AGENTS.md` |
+| `crates/betterlogi-hidpp/**` (hard fork of `hidpp`) | `crates/betterlogi-hidpp/AGENTS.md` |
+| `crates/betterlogi-device/**`, `crates/betterlogi-hid/**` (the HID++ layer seam) | `crates/betterlogi-device/AGENTS.md` |
+| `crates/betterlogi-hook/**` (event taps) | `crates/betterlogi-hook/AGENTS.md` |
 | `xtask/**`, `packaging/**`, `.github/scripts/**` | `xtask/AGENTS.md` (+ `xtask/README.md`) |
 | macOS native FFI (the rule carries the canonical path inventory) | [.agents/rules/objc-ffi.md](.agents/rules/objc-ffi.md) |
 
@@ -236,20 +236,20 @@ client-loading checks, including Windows symlink requirements.
 Load the skill when its task matches. If the client cannot invoke skills, read
 the linked `SKILL.md` and the references it requires. For GPUI work, use the
 upstream skills as the default design and coding practice; `.agents/rules/gui.md`
-contains only OpenLogi integration constraints and verification entrypoints.
+contains only BetterLogi integration constraints and verification entrypoints.
 
 | Task | Skill |
 |---|---|
-| structural code search, rewrites, or ast-grep guard authoring | [ast-grep](.agents/skills/ast-grep/SKILL.md); follow the [OpenLogi guard workflow](.agents/rules/ci.md#ast-grep-rules) |
+| structural code search, rewrites, or ast-grep guard authoring | [ast-grep](.agents/skills/ast-grep/SKILL.md); follow the [BetterLogi guard workflow](.agents/rules/ci.md#ast-grep-rules) |
 | GPUI implementation, components, state, lifecycle, or testing | [gpui-kit](.agents/skills/gpui-kit/SKILL.md) |
 | GUI layout, styling, interaction, copy, or design review | [gpui-kit-design-guides](.agents/skills/gpui-kit-design-guides/SKILL.md) |
-| native UI verification, component gallery, mock-agent workflows, or visual/interaction regression tests | [testing-openlogi-ui](.agents/skills/testing-openlogi-ui/SKILL.md) |
-| missing HID devices, failed opens or pairing, stale inventory, reconnect failures, unsupported features, or CLI/GUI disagreement | [diagnosing-openlogi-devices](.agents/skills/diagnosing-openlogi-devices/SKILL.md) |
-| planning a regression test, selecting checks after changes, or verifying an authorized commit/push | [verifying-openlogi-changes](.agents/skills/verifying-openlogi-changes/SKILL.md) |
+| native UI verification, component gallery, mock-agent workflows, or visual/interaction regression tests | [testing-betterlogi-ui](.agents/skills/testing-betterlogi-ui/SKILL.md) |
+| missing HID devices, failed opens or pairing, stale inventory, reconnect failures, unsupported features, or CLI/GUI disagreement | [diagnosing-betterlogi-devices](.agents/skills/diagnosing-betterlogi-devices/SKILL.md) |
+| planning a regression test, selecting checks after changes, or verifying an authorized commit/push | [verifying-betterlogi-changes](.agents/skills/verifying-betterlogi-changes/SKILL.md) |
 | recording, reviewing, or contributing device profiles and HID++ cassettes | [contributing-device-fixtures](.agents/skills/contributing-device-fixtures/SKILL.md) |
-| a macOS report of no devices / "Failed to open device" / which permission to grant, and any change to the permission, helper-launch, or bundle-signing code | `.claude/skills/openlogi-macos-permissions/SKILL.md` |
+| a macOS report of no devices / "Failed to open device" / which permission to grant, and any change to the permission, helper-launch, or bundle-signing code | `.claude/skills/betterlogi-macos-permissions/SKILL.md` |
 
-The four OpenLogi workflow skills are maintained locally with the code. Keep
+The four BetterLogi workflow skills are maintained locally with the code. Keep
 mandatory invariants in this file and the scoped rules; link to those rules from
 skills rather than maintaining a second policy. Local skills have no upstream
 entry in `skills-lock.json`.

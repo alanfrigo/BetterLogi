@@ -1,9 +1,9 @@
-//! Assemble the throwaway `target/dev/OpenLogi.app` that `cargo run -p
-//! openlogi-desktop` launches.
+//! Assemble the throwaway `target/dev/BetterLogi.app` that `cargo run -p
+//! betterlogi-desktop` launches.
 //!
-//! A bare `target/debug/openlogi-desktop` has no `Info.plist` and no
+//! A bare `target/debug/betterlogi-desktop` has no `Info.plist` and no
 //! `Resources`, so macOS falls back to the executable name and a generic icon,
-//! registers no `openlogi://` handler, and gives TCC nothing stable to key a
+//! registers no `betterlogi://` handler, and gives TCC nothing stable to key a
 //! grant to. Wrapping the build in a real bundle fixes all four — and doing it
 //! here rather than in the cargo runner means the dev and shipped bundles are
 //! assembled by the same code: one identity table ([`identity::Channel`]), one
@@ -12,7 +12,7 @@
 //! up with no icon and the dev identity had to be renamed twice.
 //!
 //! The runner keeps only what must stay cheap: it is invoked for every binary
-//! of every `cargo run`/`test`/`bench`, and everything but `openlogi-desktop`
+//! of every `cargo run`/`test`/`bench`, and everything but `betterlogi-desktop`
 //! is a passthrough that must not pay for an interpreter start.
 
 mod processes;
@@ -38,19 +38,19 @@ const CHANNEL: Channel = Channel::Dev;
 /// `cargo-bundle` from `Cargo.toml`, so this is the only checked-in one; like
 /// the helpers' it carries no identity of its own — [`identity::stamp`] writes
 /// it.
-const APP_PLIST: &str = "crates/openlogi-desktop/bundle/desktop-dev/Info.plist";
+const APP_PLIST: &str = "crates/betterlogi-desktop/bundle/desktop-dev/Info.plist";
 
 /// The shared app icon, compiled by [`AppBundle`] alongside the catalog and
 /// the alternates. Only this one is checked in; the rest a fresh clone
 /// compiles on its first bundle.
-const ICON: &str = "crates/openlogi-desktop/icon/AppIcon.icns";
+const ICON: &str = "crates/betterlogi-desktop/icon/AppIcon.icns";
 
 /// What the identity pass covers when the helpers were not embedded.
 const APP_ONLY: [Component; 1] = [Component::App];
 
 #[derive(Parser)]
 pub(crate) struct Args {
-    /// The freshly built `openlogi-desktop` to wrap. Its parent directory also
+    /// The freshly built `betterlogi-desktop` to wrap. Its parent directory also
     /// names the profile the helpers are built in, so the bundle never mixes a
     /// release GUI with a debug agent.
     #[arg(long)]
@@ -59,7 +59,7 @@ pub(crate) struct Args {
 
 pub(crate) fn run(args: &Args) -> Result<()> {
     let root = repo_root()?;
-    let app = root.join("target/dev/OpenLogi.app");
+    let app = root.join("target/dev/BetterLogi.app");
     let profile = BuildProfile::of(&args.binary)?;
 
     processes::reap_leftovers(&app, &root.join("target"))?;
@@ -73,7 +73,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
     fs_err::create_dir_all(app.join("Contents/Resources"))?;
     place_binary(
         &args.binary,
-        &app.join("Contents/MacOS/openlogi-desktop"),
+        &app.join("Contents/MacOS/betterlogi-desktop"),
         &signing,
     )?;
     fs_err::copy(root.join(APP_PLIST), app.join("Contents/Info.plist"))
@@ -86,8 +86,8 @@ pub(crate) fn run(args: &Args) -> Result<()> {
     // leftover from an older checkout is a second row in every macOS list that
     // names these processes. Same for the launchd service plists: one from an
     // earlier build could name a helper this build does not embed.
-    remove_bundle(&app.join(openlogi_core::brand::LOGIN_ITEMS_DIR))?;
-    remove_bundle(&app.join(openlogi_core::brand::LAUNCH_AGENTS_DIR))?;
+    remove_bundle(&app.join(betterlogi_core::brand::LOGIN_ITEMS_DIR))?;
+    remove_bundle(&app.join(betterlogi_core::brand::LAUNCH_AGENTS_DIR))?;
     let components = if helpers_wanted() {
         for helper in &HELPERS {
             embed_helper(&root, &app, &profile, helper, &icon, &signing)?;
@@ -95,7 +95,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         write_agent_launch_plist(&app, CHANNEL)?;
         Component::VARIANTS
     } else {
-        println!("==> helpers: skipped (OPENLOGI_DEV_AGENT=0)");
+        println!("==> helpers: skipped (BETTERLOGI_DEV_AGENT=0)");
         &APP_ONLY
     };
 
@@ -145,7 +145,7 @@ fn start_agent(app: &Path) -> Result<()> {
 
     // The dev agent serves the sibling dev profile's socket; xtask itself is
     // not a dev-profile process, so it asks for that profile's path by name.
-    let socket = openlogi_core::paths::agent_socket_path_for(CHANNEL.into())
+    let socket = betterlogi_core::paths::agent_socket_path_for(CHANNEL.into())
         .map_err(|error| anyhow::anyhow!("could not resolve the dev socket: {error}"))?;
     let started = std::time::Instant::now();
     while started.elapsed() < AGENT_SOCKET_TIMEOUT {
@@ -244,7 +244,7 @@ fn sign_order(app: &Path, components: &[Component]) -> Vec<PathBuf> {
     targets
 }
 
-/// Register the bundle so `openlogi://` resolves to the dev build.
+/// Register the bundle so `betterlogi://` resolves to the dev build.
 ///
 /// Dev and release register the same scheme and LaunchServices routes to
 /// whichever registered last, so this also re-asserts the dev build after an
@@ -261,14 +261,16 @@ fn register_with_launch_services(app: &Path) -> Result<()> {
         .run()
         .is_err()
     {
-        println!("    warning: lsregister failed; openlogi:// may open the installed app instead");
+        println!(
+            "    warning: lsregister failed; betterlogi:// may open the installed app instead"
+        );
     }
     Ok(())
 }
 
 /// Whether to build and embed the agent and overlay helpers.
 fn helpers_wanted() -> bool {
-    std::env::var("OPENLOGI_DEV_AGENT").as_deref() != Ok("0")
+    std::env::var("BETTERLOGI_DEV_AGENT").as_deref() != Ok("0")
 }
 
 /// Where cargo put the build, and which profile it was.

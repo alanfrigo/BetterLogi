@@ -20,13 +20,13 @@ pub(crate) struct Args {
 ///
 /// One list drives both the build and the existence check below. They used to
 /// be written out separately and drifted: the build stopped one short of the
-/// package, so `openlogi-overlay` only ever reached a `.deb` when a cached
+/// package, so `betterlogi-overlay` only ever reached a `.deb` when a cached
 /// `target/release` happened to still hold one from an earlier run.
 const PACKAGED_BINS: [&str; 4] = [
-    openlogi_core::brand::CLI_EXECUTABLE,
-    openlogi_core::brand::GUI_EXECUTABLE,
-    openlogi_core::brand::Helper::Overlay.executable(),
-    openlogi_core::brand::Helper::Agent.executable(),
+    betterlogi_core::brand::CLI_EXECUTABLE,
+    betterlogi_core::brand::GUI_EXECUTABLE,
+    betterlogi_core::brand::Helper::Overlay.executable(),
+    betterlogi_core::brand::Helper::Agent.executable(),
 ];
 
 pub(crate) fn run(args: &Args) -> Result<()> {

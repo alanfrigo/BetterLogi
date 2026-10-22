@@ -21,8 +21,8 @@ const EXIT_POLL_PERIOD: std::time::Duration = std::time::Duration::from_millis(1
 
 /// The processes this checkout owns.
 const OURS: [&str; 2] = [
-    openlogi_core::brand::Helper::Agent.executable(),
-    openlogi_core::brand::Helper::Overlay.executable(),
+    betterlogi_core::brand::Helper::Agent.executable(),
+    betterlogi_core::brand::Helper::Overlay.executable(),
 ];
 
 /// Stop this checkout's leftovers, and refuse to share the machine with an
@@ -31,7 +31,7 @@ const OURS: [&str; 2] = [
 /// An agent whose executable lives outside `app` and `target` is the
 /// developer's production install: the GUI would connect to *that* one and make
 /// GUI+agent testing meaningless, so it is reported rather than killed.
-/// `OPENLOGI_ALLOW_EXTERNAL_AGENT=1` says the developer meant it.
+/// `BETTERLOGI_ALLOW_EXTERNAL_AGENT=1` says the developer meant it.
 pub(super) fn reap_leftovers(app: &Path, target: &Path) -> Result<()> {
     let mut system = System::new();
     system.refresh_processes_specifics(
@@ -54,12 +54,13 @@ pub(super) fn reap_leftovers(app: &Path, target: &Path) -> Result<()> {
         };
         if exe.starts_with(app) || exe.starts_with(target) {
             ours.push(*pid);
-        } else if name == openlogi_core::brand::Helper::Agent.executable() {
+        } else if name == betterlogi_core::brand::Helper::Agent.executable() {
             external.push((*pid, exe.to_path_buf()));
         }
     }
 
-    if !external.is_empty() && std::env::var("OPENLOGI_ALLOW_EXTERNAL_AGENT").as_deref() != Ok("1")
+    if !external.is_empty()
+        && std::env::var("BETTERLOGI_ALLOW_EXTERNAL_AGENT").as_deref() != Ok("1")
     {
         let listed = external
             .iter()
@@ -70,15 +71,15 @@ pub(super) fn reap_leftovers(app: &Path, target: &Path) -> Result<()> {
             crate::commands::macos::bundle::identity::Channel::Production,
         );
         bail!(
-            "an external openlogi-agent is already running.\n\n\
+            "an external betterlogi-agent is already running.\n\n\
              The dev GUI would connect to that agent instead of the freshly built dev\n\
              agent, which makes GUI+agent testing misleading. Stop it first: Quit from\n\
              its menu-bar icon, or\n\n  \
-             pkill -x openlogi-agent\n\n\
+             pkill -x betterlogi-agent\n\n\
              (for an install registered as a login item, also:\n  \
              launchctl bootout \"gui/$(id -u)/{service}\")\n\n\
              Running external agent(s):\n{listed}\n\n\
-             If this is intentional, rerun with OPENLOGI_ALLOW_EXTERNAL_AGENT=1."
+             If this is intentional, rerun with BETTERLOGI_ALLOW_EXTERNAL_AGENT=1."
         );
     }
 

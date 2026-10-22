@@ -28,9 +28,9 @@ devenv.local.yaml
 /.agents/skills/*
 !/.agents/skills/gpui-kit/
 !/.agents/skills/gpui-kit-design-guides/
-!/.agents/skills/testing-openlogi-ui/
-!/.agents/skills/diagnosing-openlogi-devices/
-!/.agents/skills/verifying-openlogi-changes/
+!/.agents/skills/testing-betterlogi-ui/
+!/.agents/skills/diagnosing-betterlogi-devices/
+!/.agents/skills/verifying-betterlogi-changes/
 !/.agents/skills/contributing-device-fixtures/
 !/.agents/skills/LICENSE-APACHE
 !/.agents/skills/ast-grep/
@@ -53,12 +53,12 @@ devenv.local.yaml
 # .claude/skills/ is the per-developer symlink farm into .agents/skills/.
 !/.claude/skills/
 /.claude/skills/*
-!/.claude/skills/openlogi-macos-permissions/
+!/.claude/skills/betterlogi-macos-permissions/
 !/.claude/skills/gpui-kit
 !/.claude/skills/gpui-kit-design-guides
-!/.claude/skills/testing-openlogi-ui
-!/.claude/skills/diagnosing-openlogi-devices
-!/.claude/skills/verifying-openlogi-changes
+!/.claude/skills/testing-betterlogi-ui
+!/.claude/skills/diagnosing-betterlogi-devices
+!/.claude/skills/verifying-betterlogi-changes
 !/.claude/skills/contributing-device-fixtures
 !/.claude/skills/ast-grep
 
@@ -72,10 +72,10 @@ node_modules/
 # Composer documents in `design/icon` on every bundle build. `AppIcon.icns` is
 # the exception: `cargo bundle` reads it straight from the manifest, so it stays
 # tracked and a plain `cargo bundle` still produces an app with an icon.
-/crates/openlogi-desktop/icon/*.icns
-!/crates/openlogi-desktop/icon/AppIcon.icns
-/crates/openlogi-desktop/icon/Assets.car
-/crates/openlogi-desktop/icon/previews/
+/crates/betterlogi-desktop/icon/*.icns
+!/crates/betterlogi-desktop/icon/AppIcon.icns
+/crates/betterlogi-desktop/icon/Assets.car
+/crates/betterlogi-desktop/icon/previews/
 
 # Packaging output.
 *.dmg

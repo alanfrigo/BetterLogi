@@ -1,4 +1,4 @@
-# Installing OpenLogi on Linux
+# Installing BetterLogi on Linux
 
 > [!NOTE]
 > Linux support is in active development. HID++ device enumeration supports
@@ -7,7 +7,7 @@
 
 ## Prerequisites
 
-- **Quit Solaar** (or any other Logitech manager) before starting OpenLogi — the
+- **Quit Solaar** (or any other Logitech manager) before starting BetterLogi — the
   two applications fight over HID++ access.
 - A kernel with `hidraw` and `uinput` module support (standard on all major
   distros).
@@ -22,7 +22,7 @@ Install `minisign` through your distribution, then run the installer as your
 normal user (not with `sudo`):
 
 ```sh
-curl -fsSL https://github.com/AprilNEA/OpenLogi/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/alanfrigo/BetterLogi/releases/latest/download/install.sh | sh
 ```
 
 The script resolves the latest GitHub release, detects `x86_64`/`aarch64` and
@@ -39,7 +39,7 @@ The one-line command trusts the `install.sh` attached to the release. To read
 and verify the script before it runs, download it with its signature instead:
 
 ```sh
-base=https://github.com/AprilNEA/OpenLogi/releases/latest/download
+base=https://github.com/alanfrigo/BetterLogi/releases/latest/download
 curl --proto '=https' --tlsv1.2 -fsSLO "$base/install.sh"
 curl --proto '=https' --tlsv1.2 -fsSLO "$base/install.sh.minisig"
 minisign -Vm install.sh -P RWRRkFtw+rqkvTlCTGKUszSE5dX9CK1teaQD45jO4P9rYlWLO4/nHVUF
@@ -56,7 +56,7 @@ Useful options:
 sh install.sh --version "$VERSION"
 
 # Pass options through the one-line command with `sh -s --`:
-curl -fsSL https://github.com/AprilNEA/OpenLogi/releases/latest/download/install.sh | sh -s -- --dry-run
+curl -fsSL https://github.com/alanfrigo/BetterLogi/releases/latest/download/install.sh | sh -s -- --dry-run
 
 # Override detection, verify without installing, or leave the agent stopped:
 sh install.sh --package-manager zypper
@@ -64,7 +64,7 @@ sh install.sh --dry-run
 sh install.sh --no-start
 ```
 
-The installer enables and starts `openlogi-agent.service` for the current user
+The installer enables and starts `betterlogi-agent.service` for the current user
 when systemd is available; failure to reach the user service manager does not
 roll back an otherwise successful package installation.
 
@@ -79,20 +79,20 @@ agent's user service.
 ```nix
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  inputs.openlogi = {
-    url = "github:AprilNEA/OpenLogi?dir=packaging";
+  inputs.betterlogi = {
+    url = "github:alanfrigo/BetterLogi?dir=packaging";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, openlogi, ... }: {
+  outputs = { nixpkgs, betterlogi, ... }: {
     nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux"; # or aarch64-linux
       modules = [
-        openlogi.nixosModules.default
+        betterlogi.nixosModules.default
         {
-          programs.openlogi = {
+          programs.betterlogi = {
             enable = true;
-            # Starts openlogi-agent with graphical-session.target by default.
+            # Starts betterlogi-agent with graphical-session.target by default.
             launchAtLogin = true;
           };
         }
@@ -102,17 +102,17 @@ agent's user service.
 }
 ```
 
-Set `programs.openlogi.launchAtLogin = false` to install the package and udev
+Set `programs.betterlogi.launchAtLogin = false` to install the package and udev
 rules without automatically starting the agent. It remains available as
-`systemctl --user start openlogi-agent.service`.
+`systemctl --user start betterlogi-agent.service`.
 
 For a build without installing the module:
 
 ```sh
-nix build 'github:AprilNEA/OpenLogi?dir=packaging#openlogi'
+nix build 'github:alanfrigo/BetterLogi?dir=packaging#betterlogi'
 ```
 
-Earlier versions of this guide used `github:AprilNEA/OpenLogi` without
+Earlier versions of this guide used `github:alanfrigo/BetterLogi` without
 `?dir=packaging`. That URL now points to a deprecated alias: it needs Nix 2.26
 or newer, prints a warning on every evaluation, and will be removed in a later
 release. Add `?dir=packaging` to the input URL to move off it.
@@ -120,10 +120,10 @@ release. Add `?dir=packaging` to the input URL to move off it.
 ## Flatpak
 
 Each release carries a `.flatpak` bundle for `amd64` and `arm64`, on the
-[releases page](https://github.com/AprilNEA/OpenLogi/releases/latest):
+[releases page](https://github.com/alanfrigo/BetterLogi/releases/latest):
 
 ```sh
-flatpak install --user ./openlogi-*.flatpak
+flatpak install --user ./betterlogi-*.flatpak
 ```
 
 It is a one-time install. There is no remote behind a bundle, so `flatpak
@@ -140,9 +140,9 @@ The same rules the packages install ship inside the app, so this needs no
 checkout and no extra download:
 
 ```sh
-flatpak run --command=cat org.openlogi.OpenLogi \
-  /app/share/openlogi/udev/70-openlogi.rules |
-  sudo tee /etc/udev/rules.d/70-openlogi.rules >/dev/null
+flatpak run --command=cat org.betterlogi.BetterLogi \
+  /app/share/betterlogi/udev/70-betterlogi.rules |
+  sudo tee /etc/udev/rules.d/70-betterlogi.rules >/dev/null
 
 sudo udevadm control --reload-rules
 sudo udevadm trigger
@@ -157,7 +157,7 @@ The agent installs its input hook once at startup, so restart the app after
 granting access:
 
 ```sh
-flatpak kill org.openlogi.OpenLogi
+flatpak kill org.betterlogi.BetterLogi
 ```
 
 Then launch it again. There is no user service to enable — unlike the packages,
@@ -166,29 +166,29 @@ the application launches its own agent.
 ## Build from source
 
 Pre-built `.deb` and `.rpm` packages are available on the
-[releases page](https://github.com/AprilNEA/OpenLogi/releases/latest) — see
+[releases page](https://github.com/alanfrigo/BetterLogi/releases/latest) — see
 the main [README](../README.md#linux) for the package-based install. To build
 from source instead, use the stable Rust toolchain:
 
 ```sh
-git clone https://github.com/AprilNEA/OpenLogi
-cd OpenLogi
+git clone https://github.com/alanfrigo/BetterLogi
+cd BetterLogi
 cargo build --release \
-  -p openlogi -p openlogi-desktop -p openlogi-overlay -p openlogi-agent
+  -p betterlogi -p betterlogi-desktop -p betterlogi-overlay -p betterlogi-agent
 ```
 
 Four production executables land in `target/release/`:
 
 | Binary | Role |
 |---|---|
-| `openlogi` | CLI — inventory, diagnostics, asset sync |
-| `openlogi-desktop` | Desktop GUI |
-| `openlogi-overlay` | Actions Ring overlay helper |
-| `openlogi-agent` | Background agent — HID++ loop, input hook |
+| `betterlogi` | CLI — inventory, diagnostics, asset sync |
+| `betterlogi-desktop` | Desktop GUI |
+| `betterlogi-overlay` | Actions Ring overlay helper |
+| `betterlogi-agent` | Background agent — HID++ loop, input hook |
 
 ## Device access: udev rules
 
-OpenLogi needs:
+BetterLogi needs:
 
 - **Write access to `/dev/uinput`** — to create the virtual input device for
   button remapping.
@@ -203,7 +203,7 @@ Install the bundled udev rules to grant access to the active-seat user without
 requiring `sudo` or group membership (requires `systemd-logind`):
 
 ```sh
-sudo cp packaging/linux/udev/70-openlogi.rules /etc/udev/rules.d/
+sudo cp packaging/linux/udev/70-betterlogi.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
@@ -212,7 +212,7 @@ Verify access (should open without error):
 
 ```sh
 # Check uinput
-openlogi-agent --check-uinput 2>/dev/null || \
+betterlogi-agent --check-uinput 2>/dev/null || \
     test -w /dev/uinput && echo "uinput OK"
 
 # Check a hidraw node
@@ -267,25 +267,25 @@ packaging/linux/uninstall.sh
 
 ## Autostart (launch at login)
 
-The background agent (`openlogi-agent`) must be running for the GUI and CLI to
+The background agent (`betterlogi-agent`) must be running for the GUI and CLI to
 show connected devices. Enable it for your user session:
 
 ```sh
-systemctl --user enable --now openlogi-agent.service
+systemctl --user enable --now betterlogi-agent.service
 ```
 
 Alternatively, toggle **Settings → General → Launch at login** in the GUI. When
 a packaged unit is already installed it simply enables that one. Otherwise — a
 build from source, or an install under a custom prefix — it generates a unit at
-`~/.local/share/systemd/user/openlogi-agent.service` pointing at the running
+`~/.local/share/systemd/user/betterlogi-agent.service` pointing at the running
 binary.
 
-Either way `~/.config/systemd/user/openlogi-agent.service` stays yours: systemd
+Either way `~/.config/systemd/user/betterlogi-agent.service` stays yours: systemd
 ranks it above both locations, so a unit you write there overrides whatever
-OpenLogi does. Use `systemctl --user edit openlogi-agent.service` for a drop-in
+BetterLogi does. Use `systemctl --user edit betterlogi-agent.service` for a drop-in
 that survives package upgrades.
 
-OpenLogi never overwrites or deletes a unit it did not generate, at either
+BetterLogi never overwrites or deletes a unit it did not generate, at either
 location, and it only turns off an autostart it turned on. Enabling the service
 yourself with the command above keeps working regardless of the GUI toggle.
 
@@ -293,10 +293,10 @@ yourself with the command above keeps working regardless of the GUI toggle.
 
 ```sh
 # List connected Logitech devices:
-openlogi list
+betterlogi list
 
 # Launch the GUI:
-openlogi-desktop
+betterlogi-desktop
 ```
 
 ## Hyprland and Omarchy
@@ -304,7 +304,7 @@ openlogi-desktop
 When the agent runs inside a Hyprland session, native actions use the
 Hyprland/Omarchy-compatible commands below:
 
-| OpenLogi action | Linux behavior |
+| BetterLogi action | Linux behavior |
 |---|---|
 | `LaunchpadShow` | `omarchy-menu toggle` |
 | `PreviousDesktop` | `hyprctl dispatch workspace e-1` |
@@ -313,7 +313,7 @@ Hyprland/Omarchy-compatible commands below:
 
 The lock action never sends `Super+L` on Hyprland because Omarchy uses that
 shortcut to change the workspace layout. If an Omarchy helper is unavailable
-or exits unsuccessfully, OpenLogi falls back to the corresponding compositor
+or exits unsuccessfully, BetterLogi falls back to the corresponding compositor
 shortcut; the lock fallback is `Super+Ctrl+L`.
 
 The agent selects this behavior when `HYPRLAND_INSTANCE_SIGNATURE` is present.
@@ -326,7 +326,7 @@ systemctl --user show-environment | \
 ```
 
 If either variable is missing, configure the session to import it into the
-systemd user manager before restarting `openlogi-agent.service`. The helper
+systemd user manager before restarting `betterlogi-agent.service`. The helper
 executables are resolved from `/usr/bin` and `/usr/local/bin`; missing helpers
 use the keyboard fallbacks above.
 
@@ -334,5 +334,5 @@ use the keyboard fallbacks above.
 
 | Limitation | Status |
 |---|---|
-| Wayland: per-application profile switching | Native on wlroots compositors (sway, Hyprland, …); GNOME needs the [companion extension](../crates/openlogi-hook/gnome-shell-extension/README.md); KDE falls back to XWayland. wlroots reports the xdg-shell `app_id` while X11 and GNOME report `WM_CLASS`, so a profile keyed under one does not match under the other |
+| Wayland: per-application profile switching | Native on wlroots compositors (sway, Hyprland, …); GNOME needs the [companion extension](../crates/betterlogi-hook/gnome-shell-extension/README.md); KDE falls back to XWayland. wlroots reports the xdg-shell `app_id` while X11 and GNOME report `WM_CLASS`, so a profile keyed under one does not match under the other |
 | Button capture: middle / mode-shift / thumbwheel | Side buttons only today |

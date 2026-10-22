@@ -45,13 +45,13 @@ Began and Ended, so the Dock changed Space with no slide (#1673). Two pull
 requests proposed a slide. #1847 posts the user's "Move left a space" and
 "Move right a space" shortcuts (symbolic hotkeys 79 and 81) and falls back to
 the DockSwipe when they are off. #1672 posts DockSwipe frames that follow a
-live drag. OpenLogi posts timed DockSwipe frames, as Logi Options+ does for
+live drag. BetterLogi posts timed DockSwipe frames, as Logi Options+ does for
 its three-finger swipe, and keeps the two-frame switch as an option.
 
 - **The Options+ timing.** Logi Options+ 2.8 posts one DockSwipe frame per
   tick of a 16.6 ms timer (`injectionPeriodInMs` in
   `gesture_handler_3_finger_horz_swipe`), and each tick consumes 15% of the
-  motion still pending. OpenLogi has no hand to follow, so it starts with one
+  motion still pending. BetterLogi has no hand to follow, so it starts with one
   desktop width pending. It posts 19 moving frames, 16.6 ms apart, until less
   than 5% remains (progress 0.954). An Ended frame with an exit velocity then
   lets the Dock finish. The progress is past the Options+ completion threshold
@@ -97,7 +97,7 @@ creates one at arming and sends shortcut keys through it.
   restricted `com.apple.developer.hid.virtual.device` entitlement. Apple grants
   it only through a provisioning profile, and AMFI kills a process that claims
   it without one (an ad-hoc signed probe exited with `SIGKILL` on macOS 26.7).
-  Release builds embed a Developer ID profile for `org.openlogi.agent` that
+  Release builds embed a Developer ID profile for `org.betterlogi.agent` that
   grants it. Local and dev builds carry none, so there creation fails and
   every key stays on `CGEventPost`.
 - **The claim and its profile ship together, or neither does.**
@@ -114,13 +114,13 @@ creates one at arming and sends shortcut keys through it.
   `gestures::create_virtual_hid_keyboard` passes only a `ReportDescriptor` (a
   65-byte boot keyboard with five key slots and an LED output report). The
   binary imports no `IOHIDUserDeviceHandleReport*` function, and the gesture
-  then posts F14 or F15 as `CGEvent`s. OpenLogi's use of input reports has no
+  then posts F14 or F15 as `CGEvent`s. BetterLogi's use of input reports has no
   Options+ precedent to copy.
 - **A boot keyboard without outputs.** The descriptor has the modifier bitmap,
   a reserved byte and six key slots: an eight-byte input report without a
   report ID. It declares no LED report, because a device without a dispatch
   queue receives no output reports. The properties set only the descriptor
-  and `Product`. Without a vendor ID, `openlogi-hid`'s Logitech filter never
+  and `Product`. Without a vendor ID, `betterlogi-hid`'s Logitech filter never
   opens the device.
 - **A key is released on the path that pressed it.** A key without a HID usage,
   a press beyond six keys, and an up edge whose down edge the device did not
@@ -132,7 +132,7 @@ creates one at arming and sends shortcut keys through it.
 - **The hook recognises the device by name.** Its key events carry no
   `SYNTHETIC_EVENT_USER_DATA`, because the HID event system creates them. The
   hook resolves each key event's sender to the device's `Product` and skips
-  OpenLogi's own, as it skips a tagged `CGEvent`.
+  BetterLogi's own, as it skips a tagged `CGEvent`.
 - **The agent owns it.** Only the armed agent creates the device. The exit path
   removes it after the input workers stop, so a chord released during shutdown
   still reaches it. The CLI and the GUI keep posting `CGEvent`s.
@@ -149,7 +149,7 @@ bundle id, a Linux application id, or a Windows executable path. The same
 application has a different identifier on each platform, so a profile written
 on one did not apply on another. Logi Options+ 2.8 solves this with one
 `applicationId` and a list of detection rules per platform
-(`applications.json`). OpenLogi adds the same layer as a table in
+(`applications.json`). BetterLogi adds the same layer as a table in
 `config.toml`, and accepts the config format change (schema 9).
 
 - **A separate table, referenced by key.** `[apps.<alias>]` lists the
@@ -170,7 +170,7 @@ on one did not apply on another. Logi Options+ 2.8 solves this with one
   nothing and silently do nothing, so loading rejects it, as the strict schema
   rejects other mistakes. Windows identifiers must be lower-case for the same
   reason: Windows reports lower-case paths.
-- **One matcher.** `openlogi_core::app` owns both the `exe:` fallback and the
+- **One matcher.** `betterlogi_core::app` owns both the `exe:` fallback and the
   alias lookup for button profiles and Actions Ring layouts, and an ast-grep
   rule keeps a second copy out.
 - **The desktop app reads aliases but does not write them yet.** It shows an
@@ -218,7 +218,7 @@ them on Linux.
 Logi Options+ 2.8 shows lock-key changes in its own on-screen indicator. Its
 `0x4220` handler compares each broadcast bitmask with the last one and posts
 one indicator per changed bit. Its `osd_resources.json` shows Caps Lock on
-every platform and Num Lock and Scroll Lock on Windows only. OpenLogi follows
+every platform and Num Lock and Scroll Lock on Windows only. BetterLogi follows
 both rules.
 
 - **A baseline before the first change.** The agent reads the keyboard's lock
@@ -240,7 +240,7 @@ both rules.
 - **On by default.** One global switch, `lock_key_notifications`, turns it
   off. The Options+ default for its setting was not found in the static
   analysis.
-- **No Fn Lock yet.** Options+ also shows "Media Keys" and "F-Keys". OpenLogi
+- **No Fn Lock yet.** Options+ also shows "Media Keys" and "F-Keys". BetterLogi
   writes the Fn Lock state back to a keyboard when it reconnects, and the
   keyboard reports that write like a key press, so the indicator would show
   on every reconnect. That needs its own decision.
@@ -253,13 +253,13 @@ keyboard yet.
 Logi Options+ 2.8 shows a low battery in its own on-screen toast
 (`logi::overlay::battery_notification`, the `low_battery` entry of its
 `notification_resources.json`), on by default. It sends OS notifications only
-for macros and integrations. OpenLogi follows the same split.
+for macros and integrations. BetterLogi follows the same split.
 
 - **No notification permission.** An OS notification needs authorization on
   macOS, a registered app identity on Windows, and a notification daemon on
   Linux. The overlay runs whenever the agent is armed, with or without the
   settings app, and already places windows per display.
-- **One rule for low.** `BatteryInfo::needs_attention` in `openlogi-core`
+- **One rule for low.** `BatteryInfo::needs_attention` in `betterlogi-core`
   decides it for the agent's notice and the settings app's battery colour, and
   an ast-grep rule keeps a second copy out.
 - **The agent owns a notice.** It decides when to post one and when it ends
@@ -318,7 +318,7 @@ state, and writes a value only when it differs from the one it read.
   agent keeps a value changed with the light's buttons or by another program
   in place of the saved one, so a reconnect writes it back instead of undoing
   it, and publishes it so the settings app can save it. A save of that control
-  or a write from OpenLogi replaces it; the power of a camera-linked light is
+  or a write from BetterLogi replaces it; the power of a camera-linked light is
   a manual choice until the next camera transition instead. The desktop app
   saves each published change, except on a light with one of its own writes in
   flight. The agent takes the controls a write sets before it writes and gives
@@ -340,7 +340,7 @@ state, and writes a value only when it differs from the one it read.
   reload. A plain `reload_config`, after a hand edit of `config.toml`, a CLI
   edit or at startup, replaces the change wherever the saved value differs,
   even when it matches an earlier report.
-- **OpenLogi's own writes are not changes on the light.** The light echoes
+- **BetterLogi's own writes are not changes on the light.** The light echoes
   every setter as a notification. A notification that matches the value the
   agent just wrote is the echo. A brightness the light's effective maximum
   explains is the light's limit, not the user's choice, even when another
@@ -364,7 +364,7 @@ Verified against scripted lights only; the repository has no Litra capture yet.
 
 A volatile `0x8071` effect shows only while the host holds software control,
 so a successful write keeps it. The agent used to keep it forever, which left
-a keyboard frozen on the last colour after OpenLogi quit, with no other host
+a keyboard frozen on the last colour after BetterLogi quit, with no other host
 able to take it until a power cycle.
 
 - **Hand it back on a final exit.** Tray quit, uninstall, and SIGTERM return
@@ -384,7 +384,7 @@ able to take it until a power cycle.
   claim. Restoring that snapshot verbatim would leave control held forever
   after an agent that never released it, which every earlier build was.
 - **The standalone CLI keeps the colour.** Leaving a colour set is the point
-  of `openlogi diag lighting`, so only the agent's exit consumes the leases.
+  of `betterlogi diag lighting`, so only the agent's exit consumes the leases.
 - **Lighting off is not a release.** It writes black under the same control;
   releasing there would light the onboard effect instead.
 - **The exit waits for writes already running.** It refuses new lighting
@@ -424,9 +424,9 @@ embeds Sparkle 2 (through `gpui-updater-sparkle`, loaded at run time) and the
 engine stays the fallback everywhere else.
 
 - **The privacy promise outranks Sparkle's defaults.** Updates are opt-in and
-  OpenLogi does not poll. The bundle ships `SUEnableAutomaticChecks = NO` and
+  BetterLogi does not poll. The bundle ships `SUEnableAutomaticChecks = NO` and
   the app switches the schedule off should the user defaults turn it on; the
-  one launch check is OpenLogi's own, behind **Check for updates**, and opens
+  one launch check is BetterLogi's own, behind **Check for updates**, and opens
   no window. `SUAllowsAutomaticUpdates = YES` is what lets **Automatic updates**
   work without the schedule: Sparkle's settings otherwise tie automatic
   downloads to automatic checks (`SPUUpdaterSettings.m`). The config owns the
@@ -458,7 +458,7 @@ engine stays the fallback everywhere else.
   the binary.
 - **Kept: `latest.json` and the DMG minisigs.** Bundles from before Sparkle read
   only the manifest, and they reach a Sparkle bundle through it.
-- **Rejected: Sparkle's XPC services.** OpenLogi is not sandboxed, so they never
+- **Rejected: Sparkle's XPC services.** BetterLogi is not sandboxed, so they never
   run; xtask removes them rather than sign and ship them.
 
 ## 2026-09: Grant probes run on notification, with a heartbeat backstop
@@ -549,7 +549,7 @@ Three things decided the API:
 - **It is an SPI, and that is accepted.** The functions are exported by IOKit
   since 10.6 and prototyped only in Apple's open-source `IOKitUser`; the
   shipping `pmset` is built on them. The hand-written `extern` is confined to
-  `activity_macos.rs` and inventoried in `.agents/rules/objc-ffi.md`. OpenLogi
+  `activity_macos.rs` and inventoried in `.agents/rules/objc-ffi.md`. BetterLogi
   is not App Store distributed.
 - **Losing the SPI fails open.** If the subscription cannot be made the gate
   is told "permanent full wake" and follows the console alone, at error level.
@@ -560,9 +560,9 @@ Three things decided the API:
 ## 2026-08: The agent stays one process; a crossing edge gets a wire, not an event layer
 
 The 2026-06 daemon split (#165) put the resident input machinery in
-`openlogi-agent` and left the GUI an on-demand IPC client. Its two
+`betterlogi-agent` and left the GUI an on-demand IPC client. Its two
 cross-process abstractions have been production infrastructure since:
-`openlogi-ipc` is the versioned, append-only wire, and `succession` owns the
+`betterlogi-ipc` is the versioned, append-only wire, and `succession` owns the
 one-process-per-role lifetime pattern (the agent negotiates as a peer, the
 overlay serves one run as a subordinate, the GUI only reports mismatches).
 This entry records the deliberate end of that road: the agent itself does not
@@ -591,7 +591,7 @@ Two facts decide it:
 
 The standing doctrine for any edge that does someday cross a process boundary:
 give it the treatment the overlay got — a versioned method on the
-`openlogi-ipc` contract (append-only, golden-tested, `PROTOCOL_VERSION`
+`betterlogi-ipc` contract (append-only, golden-tested, `PROTOCOL_VERSION`
 bumped) plus a `succession` role for the new process's lifetime — and cut
 along the named seams (`startup::StateWatchers` is the message list of a
 watcher-side wire, `lifecycle::Armed` is the consumer-side state list). What
@@ -654,10 +654,10 @@ two systemic problems, both now fixed.
   `clippy.toml` with `allow-unwrap-in-tests` / `allow-expect-in-tests` replaces
   all of them. Clippy's exemption covers `#[cfg(test)]` modules and `#[test]`
   functions; a free helper in a `tests/` integration file is the one shape it
-  cannot see, so `openlogi-ipc`'s wire-format test keeps a file-level
+  cannot see, so `betterlogi-ipc`'s wire-format test keeps a file-level
   suppression. Build scripts are not tests and keep theirs too.
 - **`allow` rots silently.** 20 suppressions no longer suppressed anything,
-  including three module-wide `dead_code` blankets in `openlogi-assets` that
+  including three module-wide `dead_code` blankets in `betterlogi-assets` that
   had been inert since those modules became `pub mod` — and would have hidden
   real dead code the moment they went private again. Suppressions are now
   `#[expect]` by default, which fails the build once it stops being needed.
@@ -671,7 +671,7 @@ two systemic problems, both now fixed.
   annotated exceptions and nothing else — the sweep had already left the tree
   compliant. One blind spot to remember: `allow_attributes` only sees outer
   `#[allow]`, so a module-wide `#![allow(…)]` — precisely the shape that rotted
-  in `openlogi-assets` — still passes it. Adding them also disproved the
+  in `betterlogi-assets` — still passes it. Adding them also disproved the
   first-pass rule that a `cfg_attr`-wrapped suppression always needs `allow`:
   two of the four turned out to work fine as `expect`.
 
@@ -682,7 +682,7 @@ a shared conversion helper. Linux CI showed `capture_linux`'s file-level
 blanket was two-thirds dead (`cast_possible_truncation` /
 `cast_possible_wrap`); the remaining `cast_sign_loss` sits on `clamp_u8`.
 
-Supersedes the "`openlogi-hidpp` stays out on purpose (vendored)" note in the
+Supersedes the "`betterlogi-hidpp` stays out on purpose (vendored)" note in the
 shared-lint-set entry below: the hard-fork ruling retired that, and the crate
 inherits `[lints] workspace = true` like every other.
 
@@ -701,19 +701,19 @@ The workspace adopted the shared ten-lint set (`assertions_on_result_states`,
 `tests_outside_test_module`, `undocumented_unsafe_blocks`) on top of the
 existing `pedantic` + `unwrap_used`/`expect_used` table.
 
-- One table, inherited everywhere. `openlogi-desktop`, `openlogi-camera` and
-  `openlogi-hook` carried hand-copied duplicates of `[workspace.lints]`, so any
+- One table, inherited everywhere. `betterlogi-desktop`, `betterlogi-camera` and
+  `betterlogi-hook` carried hand-copied duplicates of `[workspace.lints]`, so any
   lint added to the workspace would have silently skipped them — three of the
   crates holding most of the FFI. Cargo rejects `[lints] workspace = true`
-  alongside local overrides, so `openlogi-hook` moved its `unsafe_code` opt-out
-  into its three platform modules. `openlogi-hidpp` stays out on purpose
+  alongside local overrides, so `betterlogi-hook` moved its `unsafe_code` opt-out
+  into its three platform modules. `betterlogi-hidpp` stays out on purpose
   (vendored).
 - `tests_outside_test_module` only recognises a literal `#[cfg(test)]`. Compound
   gates are written as stacked attributes (`#[cfg(test)]` then `#[cfg(unix)]`);
   an integration test under `tests/` carries a file-level `#![expect(…)]`
   because that file is already a test-only crate. Splitting the attribute also
   wakes `items_after_test_module`, so such a module belongs last in its file.
-- `exit` gets a real `ExitCode` wherever the call site can return — `openlogi
+- `exit` gets a real `ExitCode` wherever the call site can return — `betterlogi
   list` hands status 2 back to `main` — and a reasoned `#[expect]` where it
   cannot (the AppKit run loop, the watchdog threads, the update handover).
   Clippy does not look inside `define_class!`, so the menu-bar Quit body moved
@@ -746,11 +746,11 @@ mature crates (`tempfile`, `which`, `plist`, `walkdir`, `xshell`, `sysinfo`,
 `fs-err`, `backon`, `opener`, `etcetera`, and others — see the git history of
 `FIXDRY.md` for the full list). The following stayed custom, deliberately:
 
-- `openlogi-core::single_instance`: the `single-instance` crate uses different
+- `betterlogi-core::single_instance`: the `single-instance` crate uses different
   backends (for example abstract Unix sockets on Linux) and does not preserve
-  OpenLogi's data-dir lock-file path, per-role names, and error classification
+  BetterLogi's data-dir lock-file path, per-role names, and error classification
   closely enough to be a safe deletion.
-- Agent tray Quit's `openlogi://quit` dispatch keeps
+- Agent tray Quit's `betterlogi://quit` dispatch keeps
   `std::process::Command::output()` intentionally: it blocks until
   LaunchServices accepts the Apple Event, while generic opener crates only
   guarantee process spawn.
@@ -764,18 +764,18 @@ mature crates (`tempfile`, `which`, `plist`, `walkdir`, `xshell`, `sysinfo`,
   systemd user units, not merely opening or spawning an arbitrary program.
 - Self-restart and `disclaim` launches stay custom because they are process
   identity / update lifecycle boundaries, not generic command orchestration.
-- `openlogi-hook`: event suppression/rewriting and foreground-app lookup are
-  OpenLogi-specific and not covered cleanly by generic input crates.
-- `openlogi-inject`: platform-specific action synthesis may overlap with
+- `betterlogi-hook`: event suppression/rewriting and foreground-app lookup are
+  BetterLogi-specific and not covered cleanly by generic input crates.
+- `betterlogi-inject`: platform-specific action synthesis may overlap with
   `enigo`, but current semantics are narrower and more controlled.
-- `openlogi-hid` / vendored `openlogi-hidpp`: the right path is upstreaming
-  OpenLogi-specific fixes, not replacing the fork blindly.
+- `betterlogi-hid` / vendored `betterlogi-hidpp`: the right path is upstreaming
+  BetterLogi-specific fixes, not replacing the fork blindly.
 
 ## 2026-06: Fn is not a capturable trigger (macOS)
 
 An instrumented `CGEventTap` probe during the function-key remapper design
 (the spec lived in `docs/superpowers/` until 2026-08; full text at
-[91fe5d80](https://github.com/AprilNEA/OpenLogi/blob/91fe5d80f3a2c16cf16061b3abb5a01d47fc8637/docs/superpowers/specs/2026-06-30-function-key-remapper-design.md))
+[91fe5d80](https://github.com/alanfrigo/BetterLogi/blob/91fe5d80f3a2c16cf16061b3abb5a01d47fc8637/docs/superpowers/specs/2026-06-30-function-key-remapper-design.md))
 settled why the Fn modifier cannot join the keyboard-remap trigger vocabulary:
 
 - F1 arrives as keycode 122 **with** the `SecondaryFn` flag, but plain `Q` and
@@ -784,7 +784,7 @@ settled why the Fn modifier cannot join the keyboard-remap trigger vocabulary:
 - The keyboard firmware holds Fn internal unless the key has a dual
   function-row meaning, so the flag attaches only to F1–F12.
   `Fn+<anything else>` is indistinguishable at the tap — firmware behavior,
-  not something OpenLogi can code around at this layer.
+  not something BetterLogi can code around at this layer.
 - The only theoretical path is raw-HID reading below the OS event system
   (Karabiner/DriverKit territory) — a large subsystem with no guarantee a
   given keyboard exposes Fn there. Not pursued.

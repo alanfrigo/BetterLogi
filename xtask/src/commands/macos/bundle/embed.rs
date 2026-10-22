@@ -5,8 +5,8 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, anyhow};
-use openlogi_core::brand;
-use openlogi_core::paths::Profile;
+use betterlogi_core::brand;
+use betterlogi_core::paths::Profile;
 use xshell::{Shell, cmd};
 
 use super::identity::{Channel, Component};
@@ -33,16 +33,16 @@ pub(crate) struct EmbeddedHelper {
 pub(crate) const HELPERS: [EmbeddedHelper; 2] = [
     EmbeddedHelper {
         component: Component::Agent,
-        package: "openlogi-agent",
+        package: "betterlogi-agent",
         binary: brand::Helper::Agent.executable(),
-        info_plist: "crates/openlogi-desktop/bundle/agent-release/Info.plist",
+        info_plist: "crates/betterlogi-desktop/bundle/agent-release/Info.plist",
         label: "agent helper",
     },
     EmbeddedHelper {
         component: Component::Overlay,
-        package: "openlogi-overlay",
+        package: "betterlogi-overlay",
         binary: brand::Helper::Overlay.executable(),
-        info_plist: "crates/openlogi-desktop/bundle/overlay-release/Info.plist",
+        info_plist: "crates/betterlogi-desktop/bundle/overlay-release/Info.plist",
         label: "Actions Ring overlay helper",
     },
 ];
@@ -56,11 +56,16 @@ pub(super) fn build_release_binaries(
 ) -> Result<()> {
     let sh = Shell::new()?;
     let _repo = sh.push_dir(root);
-    let mut targets = vec!["--package", "openlogi-desktop", "--bin", "openlogi-desktop"];
+    let mut targets = vec![
+        "--package",
+        "betterlogi-desktop",
+        "--bin",
+        "betterlogi-desktop",
+    ];
     for helper in &HELPERS {
         targets.extend(["--package", helper.package, "--bin", helper.binary]);
     }
-    targets.extend(["--package", "openlogi", "--bin", "openlogi"]);
+    targets.extend(["--package", "betterlogi", "--bin", "betterlogi"]);
     if let Some(target) = target {
         targets.extend(["--target", target]);
     }
@@ -79,7 +84,7 @@ pub(super) fn build_release_binaries(
 /// foreground the GUI from the agent's menu, and gives the agent a stable
 /// signed identity so its Accessibility (TCC) grant survives app updates.
 ///
-/// Every helper gets the GUI's icon, so each shows the OpenLogi mark rather than
+/// Every helper gets the GUI's icon, so each shows the BetterLogi mark rather than
 /// a generic blank wherever macOS lists it — System Settings' Accessibility
 /// pane, Login Items. Icon generation already ran, so the icns is on disk.
 pub(super) fn embed_helpers(
@@ -89,7 +94,7 @@ pub(super) fn embed_helpers(
     channel: Channel,
     versions: &BundleVersions,
 ) -> Result<()> {
-    let icon = root.join("crates/openlogi-desktop/icon/AppIcon.icns");
+    let icon = root.join("crates/betterlogi-desktop/icon/AppIcon.icns");
     ensure_file(&icon)?;
     for helper in &HELPERS {
         embed_helper(root, release_dir, app, helper, &icon, channel, versions)?;

@@ -17,9 +17,9 @@ use bundle::identity::Channel;
 pub(crate) enum Command {
     /// Compile the macOS app icon from its Icon Composer document.
     Icon,
-    /// Build the OpenLogi.app bundle.
+    /// Build the BetterLogi.app bundle.
     Bundle(BundleArgs),
-    /// Wrap a freshly built desktop binary in `target/dev/OpenLogi.app`.
+    /// Wrap a freshly built desktop binary in `target/dev/BetterLogi.app`.
     /// Driven by the cargo runner; not normally run by hand.
     DevBundle(dev_bundle::Args),
     /// Create the branded macOS DMG from an existing app bundle.
@@ -54,7 +54,7 @@ pub(crate) struct PackageArgs {
     /// `--sparkle-public-key`.
     #[arg(long, env = update_feed::BASE_URL_ENV)]
     update_base_url: Option<String>,
-    /// Developer ID provisioning profile that grants `org.openlogi.agent` the
+    /// Developer ID provisioning profile that grants `org.betterlogi.agent` the
     /// HID virtual-device entitlement. Given one, the signed agent embeds it
     /// and types shortcut keys through a virtual HID keyboard; without one,
     /// the agent types through `CGEventPost`. Requires `--sign-identity`.

@@ -1,14 +1,14 @@
 #!/bin/sh
-# Install an OpenLogi Linux release package, or install a local release build
+# Install an BetterLogi Linux release package, or install a local release build
 # from a repository checkout. This script intentionally uses POSIX /bin/sh.
 
 set -eu
 
-REPOSITORY=AprilNEA/OpenLogi
+REPOSITORY=alanfrigo/BetterLogi
 GITHUB_URL=https://github.com
 RELEASES_URL="${GITHUB_URL}/${REPOSITORY}/releases"
 # Public trust anchor for release package signatures. Keep this in sync with
-# OPENLOGI_UPDATE_MINISIGN_PUBLIC_KEY in the release publishing configuration.
+# BETTERLOGI_UPDATE_MINISIGN_PUBLIC_KEY in the release publishing configuration.
 MINISIGN_PUBLIC_KEY=RWRRkFtw+rqkvTlCTGKUszSE5dX9CK1teaQD45jO4P9rYlWLO4/nHVUF
 
 MODE=release
@@ -42,7 +42,7 @@ Usage:
   $0 [OPTIONS]
   $0 --from-source [--prefix PREFIX] [OPTIONS]
 
-Install the latest OpenLogi release package for this Linux distribution.
+Install the latest BetterLogi release package for this Linux distribution.
 Release packages are downloaded from GitHub, authenticated with the embedded
 minisign public key, and verified against the exact entry in SHA256SUMS before
 the package manager is invoked with sudo. The minisign command is required.
@@ -146,7 +146,7 @@ make_temp_dir() {
   temp_base=${TMPDIR:-/tmp}
   [ -d "$temp_base" ] || die "temporary directory does not exist: $temp_base"
   umask 077
-  TEMP_DIR=$(mktemp -d "${temp_base%/}/openlogi-install.XXXXXXXXXX") ||
+  TEMP_DIR=$(mktemp -d "${temp_base%/}/betterlogi-install.XXXXXXXXXX") ||
     die "could not create a temporary directory"
 }
 
@@ -293,20 +293,20 @@ install_release_package() {
 start_agent() {
   [ "$NO_START" -eq 0 ] || return 0
   if [ "$DRY_RUN" -eq 1 ]; then
-    print_command systemctl --user enable --now openlogi-agent.service
+    print_command systemctl --user enable --now betterlogi-agent.service
     return 0
   fi
   if ! command -v systemctl >/dev/null 2>&1; then
-    printf '%s\n' "systemctl is unavailable; the OpenLogi agent was not started." >&2
+    printf '%s\n' "systemctl is unavailable; the BetterLogi agent was not started." >&2
     return 0
   fi
 
   systemctl --user daemon-reload >/dev/null 2>&1 || true
-  if systemctl --user enable --now openlogi-agent.service; then
-    printf '%s\n' "Enabled and started openlogi-agent.service for the current user."
+  if systemctl --user enable --now betterlogi-agent.service; then
+    printf '%s\n' "Enabled and started betterlogi-agent.service for the current user."
   else
-    printf '%s\n' "OpenLogi installed, but the user agent could not be started." >&2
-    printf '%s\n' "Try: systemctl --user enable --now openlogi-agent.service" >&2
+    printf '%s\n' "BetterLogi installed, but the user agent could not be started." >&2
+    printf '%s\n' "Try: systemctl --user enable --now betterlogi-agent.service" >&2
   fi
 }
 
@@ -324,14 +324,14 @@ install_release() {
   select_package_manager
   make_temp_dir
 
-  PACKAGE_NAME="openlogi-${RELEASE_TAG}-linux-${PACKAGE_ARCH}.${PACKAGE_EXTENSION}"
+  PACKAGE_NAME="betterlogi-${RELEASE_TAG}-linux-${PACKAGE_ARCH}.${PACKAGE_EXTENSION}"
   PACKAGE_PATH="${TEMP_DIR}/${PACKAGE_NAME}"
   SIGNATURE_PATH="${PACKAGE_PATH}.minisig"
   CHECKSUMS_PATH="${TEMP_DIR}/SHA256SUMS"
   CHECK_PATH="${TEMP_DIR}/SHA256SUMS.selected"
   RELEASE_DOWNLOAD_URL="${RELEASES_URL}/download/${RELEASE_TAG}"
 
-  printf 'Downloading OpenLogi %s for %s (%s)...\n' \
+  printf 'Downloading BetterLogi %s for %s (%s)...\n' \
     "$VERSION" "$PACKAGE_ARCH" "$PACKAGE_MANAGER"
   curl_download "$PACKAGE_PATH" "${RELEASE_DOWNLOAD_URL}/${PACKAGE_NAME}"
   curl_download "$SIGNATURE_PATH" "${RELEASE_DOWNLOAD_URL}/${PACKAGE_NAME}.minisig"
@@ -359,7 +359,7 @@ install_release() {
   if [ "$DRY_RUN" -eq 1 ]; then
     printf '%s\n' "Dry run complete; no package was installed."
   else
-    printf '%s\n' "OpenLogi ${VERSION} installed. Run 'openlogi-desktop' to start the GUI."
+    printf '%s\n' "BetterLogi ${VERSION} installed. Run 'betterlogi-desktop' to start the GUI."
   fi
 }
 
@@ -395,13 +395,13 @@ install_source() {
     die "--from-source must be run from a repository checkout"
   BUILD_DIR=${REPO_ROOT}/target/release
 
-  for binary in openlogi openlogi-desktop openlogi-overlay openlogi-agent; do
+  for binary in betterlogi betterlogi-desktop betterlogi-overlay betterlogi-agent; do
     [ -x "${BUILD_DIR}/${binary}" ] ||
       die "${BUILD_DIR}/${binary} is missing; build all four release binaries first"
   done
-  [ -f "${SCRIPT_DIR}/udev/70-openlogi.rules" ] || die "repository udev rules are missing"
-  [ -f "${SCRIPT_DIR}/systemd/openlogi-agent.service" ] || die "repository systemd unit is missing"
-  [ -f "${SCRIPT_DIR}/desktop/openlogi.desktop" ] || die "repository desktop entry is missing"
+  [ -f "${SCRIPT_DIR}/udev/70-betterlogi.rules" ] || die "repository udev rules are missing"
+  [ -f "${SCRIPT_DIR}/systemd/betterlogi-agent.service" ] || die "repository systemd unit is missing"
+  [ -f "${SCRIPT_DIR}/desktop/betterlogi.desktop" ] || die "repository desktop entry is missing"
   [ -f "${REPO_ROOT}/design/icon/openlogi.png" ] || die "repository app icon is missing"
 
   if [ "$PREFIX" = / ]; then
@@ -412,27 +412,27 @@ install_source() {
 
   make_temp_dir
   escaped_bindir=$(printf '%s\n' "$BINDIR" | sed 's|[&\\|]|\\&|g')
-  sed "s|^ExecStart=/usr/bin/openlogi-agent$|ExecStart=${escaped_bindir}/openlogi-agent|" \
-    "${SCRIPT_DIR}/systemd/openlogi-agent.service" >"${TEMP_DIR}/openlogi-agent.service"
+  sed "s|^ExecStart=/usr/bin/betterlogi-agent$|ExecStart=${escaped_bindir}/betterlogi-agent|" \
+    "${SCRIPT_DIR}/systemd/betterlogi-agent.service" >"${TEMP_DIR}/betterlogi-agent.service"
 
   printf 'Installing local release binaries to %s...\n' "$BINDIR"
-  for binary in openlogi openlogi-desktop openlogi-overlay openlogi-agent; do
+  for binary in betterlogi betterlogi-desktop betterlogi-overlay betterlogi-agent; do
     install_source_file 755 "${BUILD_DIR}/${binary}" "${BINDIR}/${binary}"
   done
 
-  install_source_file 644 "${SCRIPT_DIR}/udev/70-openlogi.rules" \
-    /etc/udev/rules.d/70-openlogi.rules
-  install_source_file 644 "${TEMP_DIR}/openlogi-agent.service" \
-    /usr/lib/systemd/user/openlogi-agent.service
-  install_source_file 644 "${SCRIPT_DIR}/desktop/openlogi.desktop" \
-    /usr/share/applications/openlogi.desktop
+  install_source_file 644 "${SCRIPT_DIR}/udev/70-betterlogi.rules" \
+    /etc/udev/rules.d/70-betterlogi.rules
+  install_source_file 644 "${TEMP_DIR}/betterlogi-agent.service" \
+    /usr/lib/systemd/user/betterlogi-agent.service
+  install_source_file 644 "${SCRIPT_DIR}/desktop/betterlogi.desktop" \
+    /usr/share/applications/betterlogi.desktop
   install_source_file 644 "${REPO_ROOT}/design/icon/openlogi.png" \
-    /usr/share/icons/hicolor/1024x1024/apps/openlogi.png
+    /usr/share/icons/hicolor/1024x1024/apps/betterlogi.png
   for size in 512 256 128 64 48 32 16; do
     sized_icon=${REPO_ROOT}/design/icon/openlogi-${size}.png
     [ -f "$sized_icon" ] || continue
     install_source_file 644 "$sized_icon" \
-      "/usr/share/icons/hicolor/${size}x${size}/apps/openlogi.png"
+      "/usr/share/icons/hicolor/${size}x${size}/apps/betterlogi.png"
   done
 
   if command -v udevadm >/dev/null 2>&1; then
@@ -453,7 +453,7 @@ install_source() {
   if [ "$DRY_RUN" -eq 1 ]; then
     printf '%s\n' "Dry run complete; no files were installed."
   else
-    printf '%s\n' "OpenLogi installed from target/release. Run 'openlogi-desktop' to start the GUI."
+    printf '%s\n' "BetterLogi installed from target/release. Run 'betterlogi-desktop' to start the GUI."
   fi
 }
 

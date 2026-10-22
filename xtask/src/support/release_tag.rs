@@ -11,7 +11,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{Context as _, Result, bail, ensure};
-use openlogi_core::update_feed::UpdateChannel;
+use betterlogi_core::update_feed::UpdateChannel;
 use semver::Version;
 
 /// The pre-release identifier of a beta tag, before its number.
@@ -19,7 +19,7 @@ const BETA_PREFIX: &str = "beta.";
 
 /// The variable a release build's [`BuildVersion`] is passed to packaging in,
 /// as `release version` prints it.
-pub(crate) const BUILD_VERSION_ENV: &str = "OPENLOGI_BUILD_VERSION";
+pub(crate) const BUILD_VERSION_ENV: &str = "BETTERLOGI_BUILD_VERSION";
 
 /// A parsed release tag: `vX.Y.Z` or `vX.Y.Z-beta.N`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -162,7 +162,7 @@ impl fmt::Display for ReleaseTag {
 /// stable release replaces the beta.
 ///
 /// Windows Installer ignores the fourth field when it compares versions, so
-/// every beta after `B` looks like `B` to it. `OpenLogi.wxs` sets
+/// every beta after `B` looks like `B` to it. `BetterLogi.wxs` sets
 /// `AllowSameVersionUpgrades` for that reason.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct BuildVersion {

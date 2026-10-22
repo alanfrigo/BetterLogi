@@ -1,5 +1,5 @@
 {
-  description = "OpenLogi — local-first companion for Logitech HID++ peripherals";
+  description = "BetterLogi — local-first companion for Logitech HID++ peripherals";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -46,7 +46,7 @@
         let
           lib = nixpkgs.lib;
           pkgs = nixpkgs.legacyPackages.${system};
-          package = self.packages.${system}.openlogi;
+          package = self.packages.${system}.betterlogi;
           evaluate =
             launchAtLogin:
             (lib.nixosSystem {
@@ -54,7 +54,7 @@
               modules = [
                 self.nixosModules.default
                 {
-                  programs.openlogi = {
+                  programs.betterlogi = {
                     enable = true;
                     inherit launchAtLogin;
                   };
@@ -67,15 +67,15 @@
         in
         assert lib.elem package enabled.environment.systemPackages;
         assert lib.elem package enabled.services.udev.packages;
-        assert enabled.systemd.user.services.openlogi-agent.wantedBy == [ "graphical-session.target" ];
-        assert manual.systemd.user.services.openlogi-agent.wantedBy == [ ];
-        assert enabled.systemd.user.services.openlogi-agent.after == [ "graphical-session.target" ];
-        assert enabled.systemd.user.services.openlogi-agent.partOf == [ "graphical-session.target" ];
-        assert manual.systemd.user.services.openlogi-agent.partOf == [ ];
+        assert enabled.systemd.user.services.betterlogi-agent.wantedBy == [ "graphical-session.target" ];
+        assert manual.systemd.user.services.betterlogi-agent.wantedBy == [ ];
+        assert enabled.systemd.user.services.betterlogi-agent.after == [ "graphical-session.target" ];
+        assert enabled.systemd.user.services.betterlogi-agent.partOf == [ "graphical-session.target" ];
+        assert manual.systemd.user.services.betterlogi-agent.partOf == [ ];
         assert
-          enabled.systemd.user.services.openlogi-agent.serviceConfig.ExecStart
-          == "${package}/bin/openlogi-agent";
-        pkgs.runCommand "openlogi-nixos-module-check" { } ''
+          enabled.systemd.user.services.betterlogi-agent.serviceConfig.ExecStart
+          == "${package}/bin/betterlogi-agent";
+        pkgs.runCommand "betterlogi-nixos-module-check" { } ''
           touch "$out"
         '';
     in
@@ -83,23 +83,23 @@
       packages = forAllSystems (
         system:
         let
-          openlogi = packageFor system;
+          betterlogi = packageFor system;
         in
         {
-          inherit openlogi;
-          default = openlogi;
+          inherit betterlogi;
+          default = betterlogi;
         }
       );
 
       checks = forAllSystems (system: {
-        package = self.packages.${system}.openlogi;
+        package = self.packages.${system}.betterlogi;
         nixos-module = moduleCheckFor system;
       });
 
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
 
       nixosModules = {
-        openlogi =
+        betterlogi =
           {
             lib,
             pkgs,
@@ -107,9 +107,9 @@
           }:
           {
             imports = [ ./linux/nixos-module.nix ];
-            programs.openlogi.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.openlogi;
+            programs.betterlogi.package = lib.mkDefault self.packages.${pkgs.stdenv.hostPlatform.system}.betterlogi;
           };
-        default = self.nixosModules.openlogi;
+        default = self.nixosModules.betterlogi;
       };
     };
 }

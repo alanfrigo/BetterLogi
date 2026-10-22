@@ -1,52 +1,52 @@
 # Usage (CLI)
 
-The `openlogi` command-line tool. For install and configuration, see the
+The `betterlogi` command-line tool. For install and configuration, see the
 [README](../README.md).
 
 For the desktop app's Add Device flow, see [wireless pairing](PAIRING.md).
 
 ```sh
-openlogi list                 # paired devices: slot, codename, kind, online, battery
-openlogi assets sync          # pre-fetch device renders from the fastest available mirror
-openlogi diag features        # dump every HID++ feature the active device reports
-openlogi diag controls        # dump reprogrammable controls and capability flags
-openlogi diag dpi             # read → write → read-back → restore DPI (smoke test)
-openlogi diag pointer-speed             # test 0x2205 pointer scaling and attempt to restore it
-openlogi diag smartshift                # toggle SmartShift and restore (smoke test)
-openlogi diag smartshift --torque 60    # set scrolling force / feedback intensity (1-100%)
-openlogi diag lighting ff0000           # solid colour for a wired RGB keyboard (any RRGGBB hex)
+betterlogi list                 # paired devices: slot, codename, kind, online, battery
+betterlogi assets sync          # pre-fetch device renders from the fastest available mirror
+betterlogi diag features        # dump every HID++ feature the active device reports
+betterlogi diag controls        # dump reprogrammable controls and capability flags
+betterlogi diag dpi             # read → write → read-back → restore DPI (smoke test)
+betterlogi diag pointer-speed             # test 0x2205 pointer scaling and attempt to restore it
+betterlogi diag smartshift                # toggle SmartShift and restore (smoke test)
+betterlogi diag smartshift --torque 60    # set scrolling force / feedback intensity (1-100%)
+betterlogi diag lighting ff0000           # solid colour for a wired RGB keyboard (any RRGGBB hex)
 ```
 
-Running `openlogi` with no subcommand defaults to `list`. Set
-`OPENLOGI_LOG=debug` for verbose tracing in the CLI, GUI, or agent.
+Running `betterlogi` with no subcommand defaults to `list`. Set
+`BETTERLOGI_LOG=debug` for verbose tracing in the CLI, GUI, or agent.
 
-`openlogi diag pointer-speed` temporarily changes the selected device's pointer scaling. The command attempts to restore and verify the original scaling even when the test write fails. `--device NAME` selects a device; `--target RAW` sets the temporary 8.8 fixed-point value (`256` is 1×). By default, the command halves the current value, or doubles it when the raw value is `1`. Firmware may accept extreme values without clipping. A restoration error means the original speed could not be confirmed.
+`betterlogi diag pointer-speed` temporarily changes the selected device's pointer scaling. The command attempts to restore and verify the original scaling even when the test write fails. `--device NAME` selects a device; `--target RAW` sets the temporary 8.8 fixed-point value (`256` is 1×). By default, the command halves the current value, or doubles it when the raw value is `1`. Firmware may accept extreme values without clipping. A restoration error means the original speed could not be confirmed.
 
 ## Automation API
 
-`openlogi api` is the JSON interface for launchers such as Raycast and local
-scripts. It requires a running, protocol-compatible OpenLogi agent. It never
+`betterlogi api` is the JSON interface for launchers such as Raycast and local
+scripts. It requires a running, protocol-compatible BetterLogi agent. It never
 opens hardware directly, starts the agent, or falls back to diagnostic commands.
-Start OpenLogi normally before using it. Existing human-readable commands are
+Start BetterLogi normally before using it. Existing human-readable commands are
 unchanged.
 
 ```sh
-openlogi api status
-openlogi api devices
+betterlogi api status
+betterlogi api devices
 # Copy an exact, non-null id from api devices; quote it as one argument.
-openlogi api dpi --device "$DEVICE_ID"
-openlogi api dpi --device "$DEVICE_ID" --set 1200
-openlogi api dpi --device "$DEVICE_ID" --set 1200 --save
-openlogi api smartshift --device "$DEVICE_ID"
-openlogi api smartshift --device "$DEVICE_ID" --mode free
-openlogi api smartshift --device "$DEVICE_ID" --mode ratchet --auto-disengage 255
-openlogi api fn-lock --device "$DEVICE_ID"
-openlogi api fn-lock --device "$DEVICE_ID" --set on
-openlogi api os-layout --device "$DEVICE_ID" --set off --save
-openlogi api report-rate --device "$DEVICE_ID"
-openlogi api report-rate --device "$DEVICE_ID" --set 1000 --save
-openlogi api easy-switch --device "$DEVICE_ID"
-openlogi api easy-switch --device "$DEVICE_ID" --channel 2 --name "Work laptop"
+betterlogi api dpi --device "$DEVICE_ID"
+betterlogi api dpi --device "$DEVICE_ID" --set 1200
+betterlogi api dpi --device "$DEVICE_ID" --set 1200 --save
+betterlogi api smartshift --device "$DEVICE_ID"
+betterlogi api smartshift --device "$DEVICE_ID" --mode free
+betterlogi api smartshift --device "$DEVICE_ID" --mode ratchet --auto-disengage 255
+betterlogi api fn-lock --device "$DEVICE_ID"
+betterlogi api fn-lock --device "$DEVICE_ID" --set on
+betterlogi api os-layout --device "$DEVICE_ID" --set off --save
+betterlogi api report-rate --device "$DEVICE_ID"
+betterlogi api report-rate --device "$DEVICE_ID" --set 1000 --save
+betterlogi api easy-switch --device "$DEVICE_ID"
+betterlogi api easy-switch --device "$DEVICE_ID" --channel 2 --name "Work laptop"
 ```
 
 ### Output and compatibility
@@ -152,7 +152,7 @@ returns `readback_mismatch`. A device without `0x1815` returns
 
 The desktop app shows the same channels in an Easy-Switch card on the Device
 tab and renames a paired channel under the same name rules. Neither the CLI
-nor the app renames a channel on its own: unlike Logi Options+, OpenLogi does
+nor the app renames a channel on its own: unlike Logi Options+, BetterLogi does
 not write this computer's name or OS onto the current channel when it starts.
 
 Hardware writes, file persistence, and reload are separate steps, not an atomic
@@ -190,12 +190,12 @@ Stable error codes: `agent_unavailable`, `handshake_failed`, `version_mismatch`,
 `readback_mismatch`, `device_error`, `identity_unavailable`, `link_override`,
 `config_error`, `config_conflict`, `config_busy`, `config_save_failed`,
 `config_reload_failed`, and `config_reload_unknown`. A protocol mismatch requires matching
-OpenLogi CLI and agent builds; it never triggers direct-hardware fallback.
+BetterLogi CLI and agent builds; it never triggers direct-hardware fallback.
 
 ## Asset synchronization
 
 Asset synchronization probes `assets.openlogi.org`, the versioned Cloudflare
 Pages release alias, and the pinned jsDelivr npm release concurrently. The first
 mirror with a valid catalog supplies every file for that synchronization run.
-Set `OPENLOGI_ASSETS` or pass `openlogi assets sync --base <URL>` to use one
+Set `BETTERLOGI_ASSETS` or pass `betterlogi assets sync --base <URL>` to use one
 uniform asset origin instead of automatic mirror selection.

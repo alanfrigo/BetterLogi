@@ -1,0 +1,19 @@
+# Owner: betterlogi_ipc::client::Observer, which arms every observe call with its
+# private observe_context — the request deadline that outlasts the agent's
+# hold. The agent side (betterlogi-agent, betterlogi-agent-core) implements the
+# hold itself and is the other legitimate reader.
+id: ipc-observe-hold-owner
+language: rust
+severity: error
+message: The observe deadline is betterlogi_ipc::client::Observer's, which arms every call with one that outlasts the hold; do not derive one from OBSERVE_HOLD here.
+note: |
+  Two clients once added their own grace to the hold. See "Single source of
+  truth" in AGENTS.md.
+files:
+  - crates/**/*.rs
+ignores:
+  - crates/betterlogi-ipc/**
+  - crates/betterlogi-agent/**
+  - crates/betterlogi-agent-core/**
+rule:
+  pattern: OBSERVE_HOLD

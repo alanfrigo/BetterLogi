@@ -6,8 +6,9 @@
 //! file, so a signature made before it would not match what users download.
 //! The bundles read these feeds from the URLs `support::update_feed` gives
 //! them, and the publish job uploads them there. Rendering and signing are
-//! `gpui-updater-release`'s; what OpenLogi's feed says stays here.
+//! `gpui-updater-release`'s; what BetterLogi's feed says stays here.
 
+use betterlogi_core::update_feed::UpdateChannel;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context as _, Result, bail, ensure};
@@ -25,7 +26,7 @@ use crate::support::update_feed::{self, MacArch};
 /// The base64 private key: the 32-byte seed Sparkle's `generate_keys -x`
 /// exports. Read only from the environment, so it never shows up in a
 /// process listing.
-const PRIVATE_KEY_ENV: &str = "OPENLOGI_SPARKLE_PRIVATE_ED_KEY";
+const PRIVATE_KEY_ENV: &str = "BETTERLOGI_SPARKLE_PRIVATE_ED_KEY";
 
 /// The extension of the deltas `release sparkle-deltas` writes; the rest of
 /// the name is `sparkle::delta::delta_file_name`'s.
@@ -44,7 +45,7 @@ pub(crate) struct Args {
     /// Release tag, for example `v0.8.14`.
     #[arg(long, env = "GITHUB_REF_NAME")]
     tag: String,
-    /// Public update base URL, for example `https://updates.openlogi.org`.
+    /// Public update base URL, for example `https://github.com/alanfrigo/BetterLogi/releases`.
     #[arg(long, env = update_feed::BASE_URL_ENV)]
     base_url: String,
     /// The public key the bundles embed (`SUPublicEDKey`). Signing fails unless
@@ -97,16 +98,12 @@ fn write_appcasts(args: &Args, private_key: &str) -> Result<()> {
             .format(&Rfc2822)
             .context("could not format the publication date")?,
         page_url: format!(
-            "https://github.com/AprilNEA/OpenLogi/releases/tag/{}",
+            "https://github.com/alanfrigo/BetterLogi/releases/tag/{}",
             args.tag
         ),
         notes,
     };
-    let release_base = format!(
-        "{}/releases/{}",
-        args.base_url.trim_end_matches('/'),
-        args.tag
-    );
+    let release_base = UpdateChannel::release_url(&args.base_url, &args.tag);
 
     // Collect every feed before writing any, so a bad delta leaves no feed
     // half-updated next to the others.
@@ -248,7 +245,7 @@ fn release_deltas(dist: &Path, dmg: &str, version: &str) -> Result<Vec<SparkleDe
 /// The appcast item for `release`, offering `enclosure`.
 fn item(release: &Release<'_>, enclosure: Enclosure) -> AppcastItem {
     let item = AppcastItem::new(release.version, enclosure)
-        .title(format!("OpenLogi {}", release.version))
+        .title(format!("BetterLogi {}", release.version))
         .pub_date(Some(release.pub_date.clone()))
         .short_version(release.version)
         .minimum_system_version(update_feed::MACOS_MINIMUM_OS_VERSION)
@@ -262,9 +259,9 @@ fn item(release: &Release<'_>, enclosure: Enclosure) -> AppcastItem {
 
 /// The appcast at `feed_url`: one item.
 fn appcast(feed_url: &str, item: AppcastItem) -> String {
-    Appcast::new("OpenLogi", feed_url)
+    Appcast::new("BetterLogi", feed_url)
         .description(format!(
-            "OpenLogi updates ({} channel)",
+            "BetterLogi updates ({} channel)",
             update_feed::CHANNEL.as_str()
         ))
         .item(item)

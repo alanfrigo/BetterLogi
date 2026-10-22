@@ -14,7 +14,7 @@ body:
     attributes:
       label: Pre-flight checklist
       options:
-        - label: I searched existing issues and the [Roadmap](https://github.com/AprilNEA/OpenLogi#roadmap), and this isn't already tracked.
+        - label: I searched existing issues and the [Roadmap](https://github.com/alanfrigo/BetterLogi#roadmap), and this isn't already tracked.
           required: true
 
   - type: textarea
@@ -29,7 +29,7 @@ body:
     id: solution
     attributes:
       label: Proposed solution
-      description: What would you like OpenLogi to do?
+      description: What would you like BetterLogi to do?
     validations:
       required: true
 

@@ -4,9 +4,9 @@
 //!
 //! The desktop app updates through Sparkle when the bundle embeds it and
 //! through its built-in engine otherwise (`platform::updater` in
-//! `openlogi-desktop`), so a package built without a Sparkle public key is a
+//! `betterlogi-desktop`), so a package built without a Sparkle public key is a
 //! working bundle, not a broken one. The keys stamped here are what keep
-//! Sparkle inside OpenLogi's privacy promise; the module docs there say how
+//! Sparkle inside BetterLogi's privacy promise; the module docs there say how
 //! the app drives it.
 
 use std::path::{Path, PathBuf};
@@ -62,7 +62,7 @@ impl Feed {
         [
             ("SUFeedURL", Value::String(self.url.clone())),
             ("SUPublicEDKey", Value::String(self.public_key.clone())),
-            // OpenLogi never polls: Sparkle's schedule stays off, without the
+            // BetterLogi never polls: Sparkle's schedule stays off, without the
             // second-launch prompt asking to turn it on. The app runs its one
             // opt-in launch check itself.
             ("SUEnableAutomaticChecks", Value::Boolean(false)),
@@ -127,7 +127,7 @@ pub(super) fn embed(root: &Path, app: &Path, feed: &Feed, versions: &BundleVersi
         version.join("Sparkle").is_file(),
         "Sparkle {VERSION} has no Versions/{FRAMEWORK_VERSION}/Sparkle; update FRAMEWORK_VERSION"
     );
-    // OpenLogi is not sandboxed, so Sparkle never uses its XPC services, and
+    // BetterLogi is not sandboxed, so Sparkle never uses its XPC services, and
     // its sandboxing guide has non-sandboxed apps remove them rather than
     // sign code that cannot run.
     fs_err::remove_file(framework.join("XPCServices"))

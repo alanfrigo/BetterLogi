@@ -168,7 +168,7 @@ impl Job {
                 "tests (linux)",
                 &["test-linux"],
                 &[Host::Linux],
-                "Excludes openlogi-desktop, but still runs openlogi-ui's portable locale-parity test. Only the desktop end-to-end key-resolution tests are absent.",
+                "Excludes betterlogi-desktop, but still runs betterlogi-ui's portable locale-parity test. Only the desktop end-to-end key-resolution tests are absent.",
             ),
             Self::TestsMacos => Spec {
                 name: "tests (macos)",
@@ -182,12 +182,12 @@ impl Job {
                 "tests (windows)",
                 &["test-windows"],
                 &[Host::Windows],
-                "Excludes openlogi-desktop like the Linux job. Executes the `cfg(windows)` tests, which `clippy (windows)` only compiles and no other host can run.",
+                "Excludes betterlogi-desktop like the Linux job. Executes the `cfg(windows)` tests, which `clippy (windows)` only compiles and no other host can run.",
             ),
             Self::CargoDeny => default_spec(
                 "cargo-deny",
                 &["deny"],
-                "Rooted at crates/openlogi — exactly the crates published to crates.io. Falls back to `nix run nixpkgs#cargo-deny` when the binary is not installed.",
+                "Rooted at crates/betterlogi — exactly the crates published to crates.io. Falls back to `nix run nixpkgs#cargo-deny` when the binary is not installed.",
             ),
             Self::ClippyWindows => Spec {
                 name: "clippy (windows)",
@@ -213,7 +213,7 @@ impl Job {
             Self::I18n => focused_spec(
                 "i18n",
                 &[],
-                "Portable catalog parity plus desktop end-to-end key resolution. Linux CI runs the first through openlogi-ui; macOS CI runs both.",
+                "Portable catalog parity plus desktop end-to-end key resolution. Linux CI runs the first through betterlogi-ui; macOS CI runs both.",
             ),
             Self::Wire => focused_spec(
                 "wire_format",

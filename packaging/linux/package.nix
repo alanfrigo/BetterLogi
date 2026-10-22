@@ -1,13 +1,13 @@
-# Nix package for OpenLogi on Linux (CLI + agent + GUI/overlay).
+# Nix package for BetterLogi on Linux (CLI + agent + GUI/overlay).
 #
 # Build via the flake in packaging/:
-#   nix build ./packaging#openlogi
+#   nix build ./packaging#betterlogi
 #
 # ## Why this doesn't suffer the #262 cargoHash churn
 #
 # The previous flake (removed in #262) used fetchCargoVendor, whose single
 # cargoHash covers one FOD containing every dependency plus a copy of
-# Cargo.lock. Because the lock embeds the local openlogi* crate versions,
+# Cargo.lock. Because the lock embeds the local betterlogi* crate versions,
 # every release bump invalidated the hash even when no dependency changed.
 #
 # This package uses rustPlatform's `cargoLock` (importCargoLock) instead:
@@ -16,7 +16,7 @@
 # - git dependencies need one manual hash per repository (not per crate,
 #   not per release): importCargoLock resolves `outputHashes` keys to git
 #   commit SHAs, so the hashes below stay valid until a git pin actually
-#   moves. A version bump of OpenLogi itself changes nothing here.
+#   moves. A version bump of BetterLogi itself changes nothing here.
 #
 # The only recurring maintenance is: when a git pin (gpui-component,
 # ...) is bumped, update the corresponding entry below — the failing build
@@ -84,7 +84,7 @@ let
   # gpui-component checkout for the GUI build script. The upstream themes live
   # at the repository root next to (not inside) the gpui-component crate, so
   # the per-crate vendor tree importCargoLock produces doesn't contain them.
-  # build.rs provides OPENLOGI_THEMES_DIR as an explicit override — point it
+  # build.rs provides BETTERLOGI_THEMES_DIR as an explicit override — point it
   # at a separate checkout. The rev must match Cargo.lock (a mismatch fails
   # the build with a hash error, so it cannot drift silently); the hash is
   # shared with outputHashes below.
@@ -97,7 +97,7 @@ let
   };
 in
 rustPlatform.buildRustPackage {
-  pname = "openlogi";
+  pname = "betterlogi";
   inherit version;
   src = source;
   strictDeps = true;
@@ -115,7 +115,7 @@ rustPlatform.buildRustPackage {
     };
   };
 
-  env.OPENLOGI_THEMES_DIR = "${gpuiComponentSrc}/themes";
+  env.BETTERLOGI_THEMES_DIR = "${gpuiComponentSrc}/themes";
 
   nativeBuildInputs = [
     pkg-config
@@ -142,89 +142,89 @@ rustPlatform.buildRustPackage {
   ];
 
   # Select production binaries explicitly: selecting the agent package alone
-  # also builds the development-only openlogi-agent-mock target.
+  # also builds the development-only betterlogi-agent-mock target.
   cargoBuildFlags = [
-    "--package=openlogi"
-    "--bin=openlogi"
-    "--package=openlogi-agent"
-    "--bin=openlogi-agent"
-    "--package=openlogi-desktop"
-    "--bin=openlogi-desktop"
-    "--package=openlogi-overlay"
-    "--bin=openlogi-overlay"
+    "--package=betterlogi"
+    "--bin=betterlogi"
+    "--package=betterlogi-agent"
+    "--bin=betterlogi-agent"
+    "--package=betterlogi-desktop"
+    "--bin=betterlogi-desktop"
+    "--package=betterlogi-overlay"
+    "--bin=betterlogi-overlay"
   ];
 
   # Match Linux CI's package selection; the desktop interaction suite is
   # additionally exercised by the macOS test jobs.
   cargoTestFlags = [
     "--workspace"
-    "--exclude=openlogi-desktop"
+    "--exclude=betterlogi-desktop"
   ];
 
   installPhase = ''
     runHook preInstall
 
     releaseDir=target/${stdenv.hostPlatform.rust.rustcTarget}/release
-    for binary in openlogi openlogi-agent openlogi-desktop openlogi-overlay; do
+    for binary in betterlogi betterlogi-agent betterlogi-desktop betterlogi-overlay; do
       install -Dm755 "$releaseDir/$binary" "$out/bin/$binary"
     done
 
-    install -Dm644 packaging/linux/desktop/openlogi.desktop \
-      "$out/share/applications/openlogi.desktop"
+    install -Dm644 packaging/linux/desktop/betterlogi.desktop \
+      "$out/share/applications/betterlogi.desktop"
     # Every standard indexed hicolor size: a stock `hicolor/index.theme`
     # stops at 512x512, so an icon installed only under `1024x1024/apps` is
     # invisible to launchers that resolve by theme index.
     install -Dm644 design/icon/openlogi.png \
-      "$out/share/icons/hicolor/1024x1024/apps/openlogi.png"
+      "$out/share/icons/hicolor/1024x1024/apps/betterlogi.png"
     for size in 512 256 128 64 48 32 16; do
       install -Dm644 "design/icon/openlogi-$size.png" \
-        "$out/share/icons/hicolor/''${size}x''${size}/apps/openlogi.png"
+        "$out/share/icons/hicolor/''${size}x''${size}/apps/betterlogi.png"
     done
-    install -Dm644 packaging/linux/udev/70-openlogi.rules \
-      "$out/lib/udev/rules.d/70-openlogi.rules"
-    install -Dm644 packaging/linux/systemd/openlogi-agent.service \
-      "$out/share/systemd/user/openlogi-agent.service"
-    install -Dm644 LICENSE-APACHE "$out/share/licenses/openlogi/LICENSE-APACHE"
-    install -Dm644 LICENSE-MIT "$out/share/licenses/openlogi/LICENSE-MIT"
+    install -Dm644 packaging/linux/udev/70-betterlogi.rules \
+      "$out/lib/udev/rules.d/70-betterlogi.rules"
+    install -Dm644 packaging/linux/systemd/betterlogi-agent.service \
+      "$out/share/systemd/user/betterlogi-agent.service"
+    install -Dm644 LICENSE-APACHE "$out/share/licenses/betterlogi/LICENSE-APACHE"
+    install -Dm644 LICENSE-MIT "$out/share/licenses/betterlogi/LICENSE-MIT"
 
-    substituteInPlace "$out/share/systemd/user/openlogi-agent.service" \
+    substituteInPlace "$out/share/systemd/user/betterlogi-agent.service" \
       --replace-fail \
-        "ExecStart=/usr/bin/openlogi-agent" \
-        "ExecStart=$out/bin/openlogi-agent"
+        "ExecStart=/usr/bin/betterlogi-agent" \
+        "ExecStart=$out/bin/betterlogi-agent"
 
     runHook postInstall
   '';
 
   postFixup = ''
-    patchelf --add-rpath "${runtimeLibs}" "$out/bin/openlogi-desktop"
+    patchelf --add-rpath "${runtimeLibs}" "$out/bin/betterlogi-desktop"
   '';
 
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
   preInstallCheck = ''
-    for binary in openlogi openlogi-agent openlogi-desktop openlogi-overlay; do
+    for binary in betterlogi betterlogi-agent betterlogi-desktop betterlogi-overlay; do
       test -x "$out/bin/$binary"
     done
-    test ! -e "$out/bin/openlogi-agent-mock"
-    test -f "$out/lib/udev/rules.d/70-openlogi.rules"
-    test -f "$out/share/applications/openlogi.desktop"
+    test ! -e "$out/bin/betterlogi-agent-mock"
+    test -f "$out/lib/udev/rules.d/70-betterlogi.rules"
+    test -f "$out/share/applications/betterlogi.desktop"
     for size in 1024 512 256 128 64 48 32 16; do
-      test -f "$out/share/icons/hicolor/''${size}x''${size}/apps/openlogi.png"
+      test -f "$out/share/icons/hicolor/''${size}x''${size}/apps/betterlogi.png"
     done
     grep -Fqx \
-      "ExecStart=$out/bin/openlogi-agent" \
-      "$out/share/systemd/user/openlogi-agent.service"
+      "ExecStart=$out/bin/betterlogi-agent" \
+      "$out/share/systemd/user/betterlogi-agent.service"
   '';
 
   meta = {
     description = "Local-first companion for Logitech HID++ peripherals";
-    homepage = "https://github.com/AprilNEA/OpenLogi";
+    homepage = "https://github.com/alanfrigo/BetterLogi";
     license = with lib.licenses; [
       mit
       asl20
     ];
-    mainProgram = "openlogi";
-    # Darwin support (the .app bundle, see nixpkgs' `openlogi`) could be
+    mainProgram = "betterlogi";
+    # Darwin support (the .app bundle, see nixpkgs' `betterlogi`) could be
     # revived here later; this package is authored and tested on Linux.
     platforms = lib.platforms.linux;
   };

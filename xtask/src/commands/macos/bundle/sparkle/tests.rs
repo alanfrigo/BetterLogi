@@ -17,10 +17,15 @@ fn versions(short: &str, build: &str) -> BundleVersions {
 
 #[test]
 fn feed_points_each_architecture_at_its_own_appcast() {
-    let feed = Feed::new(PUBLIC_KEY, "https://updates.openlogi.org/", MacArch::X86_64).unwrap();
+    let feed = Feed::new(
+        PUBLIC_KEY,
+        "https://github.com/alanfrigo/BetterLogi/releases/",
+        MacArch::X86_64,
+    )
+    .unwrap();
     assert_eq!(
         feed.url,
-        "https://updates.openlogi.org/channels/stable/appcast-x86_64.xml"
+        "https://github.com/alanfrigo/BetterLogi/releases/latest/download/appcast-x86_64.xml"
     );
     // Surrounding whitespace from a pasted secret is not part of the key.
     let feed = Feed::new(
@@ -32,7 +37,7 @@ fn feed_points_each_architecture_at_its_own_appcast() {
     assert_eq!(feed.public_key, PUBLIC_KEY);
     assert_eq!(
         feed.url,
-        "https://u.example/channels/stable/appcast-arm64.xml"
+        "https://u.example/latest/download/appcast-arm64.xml"
     );
 }
 
@@ -68,7 +73,7 @@ fn info_plist_keeps_sparkle_from_polling_and_verifies_before_extracting() {
     );
     assert_eq!(
         entries.get("SUFeedURL").and_then(Value::as_string),
-        Some("https://u.example/channels/stable/appcast-arm64.xml")
+        Some("https://u.example/latest/download/appcast-arm64.xml")
     );
 }
 
@@ -77,7 +82,10 @@ fn configure_stamps_the_keys_beside_what_the_bundle_already_declares() {
     let dir = tempfile::tempdir().unwrap();
     let info_plist = dir.path().join("Info.plist");
     let mut existing = Dictionary::new();
-    existing.insert("CFBundleIdentifier".into(), "org.openlogi.openlogi".into());
+    existing.insert(
+        "CFBundleIdentifier".into(),
+        "org.betterlogi.betterlogi".into(),
+    );
     existing.insert("CFBundleShortVersionString".into(), "0.8.14".into());
     existing.insert("CFBundleVersion".into(), "0.8.14".into());
     // A stale value from an earlier stamp is replaced, not kept.
@@ -93,7 +101,7 @@ fn configure_stamps_the_keys_beside_what_the_bundle_already_declares() {
     let dict = plist.as_dictionary().unwrap();
     assert_eq!(
         dict.get("CFBundleIdentifier").and_then(Value::as_string),
-        Some("org.openlogi.openlogi")
+        Some("org.betterlogi.betterlogi")
     );
     assert_eq!(
         dict.get("SUEnableAutomaticChecks")
@@ -154,7 +162,7 @@ fn configure_takes_a_beta_whose_bundle_version_is_its_build_version() {
 #[test]
 fn sparkle_code_is_signed_inside_out_and_only_when_embedded() {
     let dir = tempfile::tempdir().unwrap();
-    let app = dir.path().join("OpenLogi.app");
+    let app = dir.path().join("BetterLogi.app");
     assert!(code_inside_out(&app).is_empty());
 
     let framework = framework(&app);

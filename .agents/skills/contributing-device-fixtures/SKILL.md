@@ -1,6 +1,6 @@
 ---
 name: contributing-device-fixtures
-description: "Guides OpenLogi device-fixture capture, privacy review, and offline verification with fixture contribute and verify. Use when recording device profiles or HID++ cassettes, contributing hardware fixtures, or reviewing fixture corpus changes."
+description: "Guides BetterLogi device-fixture capture, privacy review, and offline verification with fixture contribute and verify. Use when recording device profiles or HID++ cassettes, contributing hardware fixtures, or reviewing fixture corpus changes."
 ---
 
 # Contribute Device Fixtures
@@ -11,17 +11,17 @@ Produce a sanitized, verifiable fixture without treating replay as proof of hard
 
 1. Read the [fixture architecture and recording workflow](../../../docs/MOCK_DEVICE_TESTING.md).
    Check current CLI support before using proposed features from that design doc.
-   Use the repository CLI with `cargo run -p openlogi -- <arguments>` if the installed
-   `openlogi` lacks the fixture commands.
+   Use the repository CLI with `cargo run -p betterlogi -- <arguments>` if the installed
+   `betterlogi` lacks the fixture commands.
 2. Choose a synthetic specimen ID and name; do not embed serials or contributor
    identity. Use a new output directory whose basename equals `--id`.
 3. Identify one physical target and transport. `--device` accepts a case-insensitive
    exact display name or exact rendered route; ambiguous selection must fail.
    Keep the same physical device and route for both phases.
-4. Match the CLI's `OPENLOGI_PROFILE` to the agent that owns the target. Confirm
+4. Match the CLI's `BETTERLOGI_PROFILE` to the agent that owns the target. Confirm
    permission to interrupt the user's agent/apps and perform direct capture before
    entering the raw phase. Use `--profile-only` when direct capture is not authorized.
-   Load the [macOS permission skill](../../../.claude/skills/openlogi-macos-permissions/SKILL.md)
+   Load the [macOS permission skill](../../../.claude/skills/betterlogi-macos-permissions/SKILL.md)
    on macOS; an agent grant does not authorize direct CLI access.
 
 ## Capture through the existing wizard
@@ -29,7 +29,7 @@ Produce a sanitized, verifiable fixture without treating replay as proof of hard
 With a compatible real agent running, use this command with the selected values:
 
 ```sh
-openlogi fixture contribute \
+betterlogi fixture contribute \
   --id mx-master-3s-001 \
   --name "MX Master 3S" \
   --device "MX Master 3S" \
@@ -49,11 +49,11 @@ openlogi fixture contribute \
   Do not describe the session as zero-write. Do not add setting writes or pairing.
 - Prefer the wizard over hand-built manifests. Use lower-level `fixture record`
   commands only for a focused case after reading their current `--help` and
-  [implementation](../../../crates/openlogi-cli/src/cmd/fixture.rs).
+  [implementation](../../../crates/betterlogi-cli/src/cmd/fixture.rs).
 
 ## Handle failures without losing evidence
 
-Read [publication and resume behavior](../../../crates/openlogi-cli/src/cmd/fixture/contribute.rs)
+Read [publication and resume behavior](../../../crates/betterlogi-cli/src/cmd/fixture/contribute.rs)
 before recovering a failed capture. Files are published individually, not as one
 atomic directory. Publication errors can leave a partial case set; the resume
 state is removed before final on-disk verification.
@@ -69,8 +69,8 @@ state is removed before final on-disk verification.
 ## Verify and review before sharing
 
 ```sh
-openlogi fixture verify fixtures/devices/mx-master-3s-001
-cargo test -p openlogi-cli fixture::verify
+betterlogi fixture verify fixtures/devices/mx-master-3s-001
+cargo test -p betterlogi-cli fixture::verify
 ```
 
 Require schema, privacy, relationship, and replay checks to pass. Strict verification

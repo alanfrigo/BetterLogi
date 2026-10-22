@@ -1,7 +1,7 @@
-# OpenLogi fixture corpus
+# BetterLogi fixture corpus
 
 This directory is the repository-level home for reviewed, sanitized
-captures produced by `openlogi fixture record`. One physical specimen owns one
+captures produced by `betterlogi fixture record`. One physical specimen owns one
 directory:
 
 ```text
@@ -14,21 +14,21 @@ fixtures/devices/<synthetic-specimen-id>/
 
 Only privacy-verified fixture assets belong here. Never commit native recorder
 output, host paths, original hardware identities, passkeys, or unsanitized
-temporary files. Run `openlogi fixture verify <fixture-directory>` before
-review. `cargo test -p openlogi-cli fixture::verify` also discovers and strictly
+temporary files. Run `betterlogi fixture verify <fixture-directory>` before
+review. `cargo test -p betterlogi-cli fixture::verify` also discovers and strictly
 verifies every fixture directory in this corpus and the packaged synthetic
 corpus, including newly added specimens.
 
 ## Automatic verification
 
-The repository tests discover every specimen through `openlogi_fixture::fs::repository_corpus`. Missing files, extra files, symlinks, invalid identities, and an absent or empty repository corpus fail the suite. Published packages without the repository workspace report that the contributed corpus is unavailable; their embedded synthetic fixture remains testable.
+The repository tests discover every specimen through `betterlogi_fixture::fs::repository_corpus`. Missing files, extra files, symlinks, invalid identities, and an absent or empty repository corpus fail the suite. Published packages without the repository workspace report that the contributed corpus is unavailable; their embedded synthetic fixture remains testable.
 
 Run the complete recorded-data chain on macOS:
 
 ```sh
-cargo test -p openlogi-cli -p openlogi-agent-core -p openlogi-agent -p openlogi-desktop contributed_corpus
-cargo test -p openlogi-cli fixture::verify
-cargo test -p openlogi-fixture --features fs fs::tests
+cargo test -p betterlogi-cli -p betterlogi-agent-core -p betterlogi-agent -p betterlogi-desktop contributed_corpus
+cargo test -p betterlogi-cli fixture::verify
+cargo test -p betterlogi-fixture --features fs fs::tests
 ```
 
 | Boundary | Automated contract |
@@ -38,7 +38,7 @@ cargo test -p openlogi-fixture --features fs fs::tests
 | Mock Agent / IPC | Every profile supplies the real mock RPC handlers. Tests check setting support, DPI and SmartShift write/readback, snapshots, and frozen-time observations. Unix tests run the production handshake and bincode socket transport in an isolated process. |
 | Desktop | Every profile enters `AppState::apply_agent_snapshot`. Tests check identity, routes, battery, measured capabilities, expected detail tabs, and stable identity across offline/online snapshots. |
 
-The operation expectation file is [`corpus_diagnostics.json`](../crates/openlogi-cli/src/cmd/fixture/record_case/corpus_diagnostics.json). Each feature tuple is `[feature_id, version, type_bits]`; each control tuple is `[control_id, task_id, capability_bits]`. The initial tables were transcribed from reviewed response payloads, independently of the production decoder. Tests never regenerate expectations. When adding a specimen, review and add its exact case set, diagnostics, and desktop tab expectations. Unknown operations, missing expectations, deleted reviewed specimens, and changed case coverage fail.
+The operation expectation file is [`corpus_diagnostics.json`](../crates/betterlogi-cli/src/cmd/fixture/record_case/corpus_diagnostics.json). Each feature tuple is `[feature_id, version, type_bits]`; each control tuple is `[control_id, task_id, capability_bits]`. The initial tables were transcribed from reviewed response payloads, independently of the production decoder. Tests never regenerate expectations. When adding a specimen, review and add its exact case set, diagnostics, and desktop tab expectations. Unknown operations, missing expectations, deleted reviewed specimens, and changed case coverage fail.
 
 All suites run under the existing workspace test jobs. CI selects those jobs when source, fixtures, test resources, dependencies, toolchain settings, or CI configuration change. Pure Markdown and unrelated design assets skip the test runners. The path filter lives in the `fmt` job of [ci.yml](../.github/workflows/ci.yml); local `cargo test` commands always run the requested suites. Linux and Windows run device and Agent tests; macOS also runs desktop tests. Unix socket isolation is unavailable on the fixed Windows pipe, so Windows runs the in-memory RPC suite instead.
 
@@ -50,7 +50,7 @@ Use the contribution wizard instead of writing `manifest.json`, synthetic
 identities, case relationships, or occurrence counts by hand:
 
 ```sh
-openlogi fixture contribute \
+betterlogi fixture contribute \
   --id mx-master-3s-001 \
   --name "MX Master 3S" \
   --device "MX Master 3S" \
@@ -81,8 +81,8 @@ recording to Agent IPC.
 
 The small built-in synthetic profile is packaging data rather than captured
 corpus. It stays under
-`crates/openlogi-fixture/fixtures/devices/openlogi-canonical-synthetic-001/` so
-the published `openlogi-fixture` crate and mock agent remain self-contained.
+`crates/betterlogi-fixture/fixtures/devices/betterlogi-canonical-synthetic-001/` so
+the published `betterlogi-fixture` crate and mock agent remain self-contained.
 It intentionally declares no recorded cases or hardware provenance.
 
 ## MX Master 4 capture

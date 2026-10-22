@@ -9,7 +9,7 @@ on:
       - master
     paths:
       # English source is SoT; non-English catalogs come from Crowdin only.
-      - crates/openlogi-ui/locales/en.toml
+      - crates/betterlogi-ui/locales/en.toml
       - .config/crowdin.yml
       - .github/workflows/crowdin.yml
       - .github/scripts/i18n/**
@@ -26,7 +26,7 @@ jobs:
   synchronize:
     name: Synchronize translations
     runs-on: ubuntu-latest
-    if: github.repository == 'AprilNEA/OpenLogi'
+    if: github.repository == 'alanfrigo/BetterLogi'
 
     steps:
       # persist-credentials must stay false: checkout's default GITHUB_TOKEN
@@ -70,8 +70,8 @@ jobs:
       - name: Snapshot locale catalogs
         run: |
           set -euo pipefail
-          mkdir -p /tmp/openlogi-locales-before
-          cp crates/openlogi-ui/locales/*.toml /tmp/openlogi-locales-before/
+          mkdir -p /tmp/betterlogi-locales-before
+          cp crates/betterlogi-ui/locales/*.toml /tmp/betterlogi-locales-before/
 
       # Upload sources + seed per-language translations, then download only
       # (no push/PR — we merge first so sparse/English exports never land).
@@ -99,16 +99,16 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/i18n/merge_crowdin_download.py \
-            --before /tmp/openlogi-locales-before \
-            --locales crates/openlogi-ui/locales \
-            --en crates/openlogi-ui/locales/en.toml
+            --before /tmp/betterlogi-locales-before \
+            --locales crates/betterlogi-ui/locales \
+            --en crates/betterlogi-ui/locales/en.toml
 
       - name: Push translation branch and open PR
         env:
           GH_TOKEN: ${{ steps.github_app.outputs.token }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- crates/openlogi-ui/locales/; then
+          if git diff --quiet -- crates/betterlogi-ui/locales/; then
             echo "No real Crowdin translation updates"
             exit 0
           fi
@@ -116,7 +116,7 @@ jobs:
           git config user.name "Crowdin Bot"
           git config user.email "support+bot@crowdin.com"
           git checkout -B crowdin/i18n
-          git add crates/openlogi-ui/locales/
+          git add crates/betterlogi-ui/locales/
           git commit -m "chore(i18n): sync Crowdin translations"
           git push -f origin crowdin/i18n
 

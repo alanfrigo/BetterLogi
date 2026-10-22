@@ -2,7 +2,7 @@
 //! macOS lists it under.
 //!
 //! macOS keys TCC grants (Accessibility, Input Monitoring) to a bundle's code
-//! identity, and `openlogi_core::paths` keys the config profile to that
+//! identity, and `betterlogi_core::paths` keys the config profile to that
 //! identifier's suffix. A shipped bundle wearing the dev identity therefore
 //! voids every existing permission grant *and* reads a different config
 //! directory — which is what releases 0.6.24–0.6.26 did, because the identity
@@ -15,8 +15,8 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Result, bail};
+use betterlogi_core::brand;
 use clap::ValueEnum;
-use openlogi_core::brand;
 use strum::{Display, VariantArray};
 
 use crate::icon::macos::ICON_NAME;
@@ -40,7 +40,7 @@ pub(crate) enum Channel {
 /// The profile a bundle of this channel runs under: packaging stamps the
 /// identifiers, and the running process derives its config directory, socket
 /// and service label from them.
-impl From<Channel> for openlogi_core::paths::Profile {
+impl From<Channel> for betterlogi_core::paths::Profile {
     fn from(channel: Channel) -> Self {
         match channel {
             Channel::Production => Self::Production,
@@ -56,7 +56,7 @@ impl From<Channel> for openlogi_core::paths::Profile {
 /// newly added component without anyone remembering to extend a list.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Display, VariantArray)]
 pub(crate) enum Component {
-    /// `OpenLogi.app` itself.
+    /// `BetterLogi.app` itself.
     #[strum(serialize = "app")]
     App,
     /// The always-on agent: the process that owns the hook and holds the
@@ -195,7 +195,7 @@ pub(crate) fn verify(app: &Path, channel: Channel, components: &[Component]) -> 
 }
 
 /// Fail unless every component ships the shared app icon *and* declares it, so
-/// no surface that lists OpenLogi's processes — System Settings' privacy panes,
+/// no surface that lists BetterLogi's processes — System Settings' privacy panes,
 /// Login Items — shows a blank icon for one of them.
 ///
 /// What the app carries beyond that `.icns` — the asset catalog, the alternates

@@ -12,10 +12,10 @@ use crate::support::fs::{absolutize, ensure_command, ensure_dir, repo_root};
 #[derive(Parser)]
 pub(crate) struct Args {
     /// App bundle to package.
-    #[arg(long, default_value = "target/release/bundle/osx/OpenLogi.app")]
+    #[arg(long, default_value = "target/release/bundle/osx/BetterLogi.app")]
     pub(crate) app: PathBuf,
     /// Output DMG path.
-    #[arg(long, default_value = "target/release/OpenLogi.dmg")]
+    #[arg(long, default_value = "target/release/BetterLogi.dmg")]
     pub(crate) output: PathBuf,
     /// Developer ID identity used to sign the DMG, and the app when packaging.
     #[arg(long, env = super::bundle::SIGN_IDENTITY_ENV)]
@@ -23,7 +23,7 @@ pub(crate) struct Args {
     /// Branded DMG background URL.
     #[arg(
         long,
-        env = "OPENLOGI_DMG_BACKGROUND_URL",
+        env = "BETTERLOGI_DMG_BACKGROUND_URL",
         default_value = "https://assets.openlogi.org/dmg/dmg-background.tiff"
     )]
     pub(crate) background_url: String,
@@ -75,7 +75,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
     // mounts on macOS 10.15+, well under the bundle's 13.0 floor.
     cmd!(
         sh,
-        "create-dmg --format ULMO --volname OpenLogi --background {background} --window-pos 240 120 --window-size 760 512 --icon-size 128 --icon OpenLogi.app 212 250 --app-drop-link 548 250 --hide-extension OpenLogi.app {output} {app}"
+        "create-dmg --format ULMO --volname BetterLogi --background {background} --window-pos 240 120 --window-size 760 512 --icon-size 128 --icon BetterLogi.app 212 250 --app-drop-link 548 250 --hide-extension BetterLogi.app {output} {app}"
     )
     .run()?;
 

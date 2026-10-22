@@ -90,9 +90,9 @@ const changelogSection = await parseChangelog({ filePath: "CHANGELOG.md", remove
     return "";
   });
 
-const prompt = `Generate polished GitHub Release notes for OpenLogi ${tag}.
+const prompt = `Generate polished GitHub Release notes for BetterLogi ${tag}.
 
-Audience: end users and technical users installing OpenLogi.
+Audience: end users and technical users installing BetterLogi.
 Tone: concise, concrete, product-facing.
 
 Required sections:
